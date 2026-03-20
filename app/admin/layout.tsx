@@ -1,4 +1,5 @@
-// (admin) 그룹 레이아웃 — 관리자 전용 쉘
+// 관리자 전용 레이아웃 — role 체크
+// TODO: middleware 또는 여기서 role === 'admin' 가드 처리
 export default function AdminLayout({
   children,
 }: {
