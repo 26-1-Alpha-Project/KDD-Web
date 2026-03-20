@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import { FcGoogle } from "react-icons/fc";
 
 // NOTE: Figma asset URLs expire in 7 days — replace with local assets before production
-const GOOGLE_ICON =
-  "https://www.figma.com/api/mcp/asset/9e1de1c6-6fa0-4429-b13f-2bb030d02a33";
-
 const slides = [
   {
     image:
@@ -40,8 +39,59 @@ export default function LoginPage() {
   const slide = slides[current];
 
   return (
-    <div>
-      <h1>로그인</h1>
+    <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="flex flex-col items-center justify-between w-100 h-161.5 py-8">
+        {/* Top spacer */}
+        <div className="h-4 w-full shrink-0" />
+
+        {/* Slide content */}
+        <div className="flex flex-1 items-center justify-center w-full">
+          <div className="flex flex-col items-center gap-8">
+            <div className="relative w-56 h-56 shrink-0">
+              <Image
+                src={slide.image}
+                alt={slide.title}
+                fill
+                className="object-contain"
+              />
+            </div>
+            <p className="text-2xl font-bold text-[#0a0a0a] text-center leading-8">
+              {slide.title}
+            </p>
+            <p className="text-base text-[#4a5565] text-center leading-6 max-w-[172px]">
+              {slide.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Bottom: dots + button + caption */}
+        <div className="flex flex-col gap-6 w-full shrink-0">
+          {/* Pagination dots */}
+          <div className="flex items-center justify-center gap-2">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                aria-label={`슬라이드 ${i + 1}`}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === current ? "w-8 bg-[#004f9f]" : "w-2 bg-[#e5e7eb]"
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Google login button + caption */}
+          <div className="flex flex-col gap-3 w-full">
+            <button className="flex items-center justify-center gap-3 w-full h-12 bg-white border border-black/15 rounded-2xl shadow-sm text-[#0a0a0a] text-[15px] font-medium cursor-pointer hover:bg-gray-50 transition-colors">
+              <FcGoogle size={20} />
+              Google로 계속하기
+            </button>
+            <p className="text-xs text-[#9ca3af] text-center">
+              국민대학교 계정(@kookmin.ac.kr)으로 로그인하세요
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
