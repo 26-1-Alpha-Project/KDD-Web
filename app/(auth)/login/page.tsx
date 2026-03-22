@@ -52,13 +52,14 @@ export default function LoginPage() {
                 src={slide.image}
                 alt={slide.title}
                 fill
+                sizes="224px"
                 className="object-contain"
               />
             </div>
             <p className="text-2xl font-bold text-[#0a0a0a] text-center leading-8">
               {slide.title}
             </p>
-            <p className="text-base text-[#4a5565] text-center leading-6 max-w-[172px]">
+            <p className="text-base text-[#4a5565] text-center leading-6 max-w-43">
               {slide.description}
             </p>
           </div>
