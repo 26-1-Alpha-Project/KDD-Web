@@ -49,18 +49,30 @@ chore: Claude Code 하네스 엔지니어링 설정 추가
 rename: ChatBox를 ChatInput으로 변경
 ```
 
-## 기존 PR 업데이트
+## 기존 PR 업데이트 + CodeRabbit 리뷰 처리
 
 커밋 + 푸시 후, 현재 브랜치에 열린 PR이 있는지 확인한다:
 
 1. `gh pr list --head <현재브랜치> --state open --json number,title`로 확인
-2. 열린 PR이 있으면:
-   - `gh pr view <번호>`로 기존 PR 본문 확인
-   - `git diff develop...HEAD --stat`과 `git log develop..HEAD --oneline`으로 전체 변경 범위 재분석
-   - PR 본문의 **변경 사항**, **변경 이유** 섹션을 현재 전체 커밋 내용에 맞게 업데이트
-   - `gh pr edit <번호> --body`로 반영
-   - 조직 PR 템플릿 형식 유지 (PR 유형, 관련 이슈, 작업 내용, 스크린샷, 체크리스트, 리뷰어 메모)
-3. 열린 PR이 없으면: 아무것도 하지 않음
+2. 열린 PR이 없으면: 아무것도 하지 않음
+3. 열린 PR이 있으면 아래 순서로 처리:
+
+### 3-1. CodeRabbit 리뷰 확인 및 처리
+
+1. `gh api repos/{owner}/{repo}/pulls/{number}/comments`로 CodeRabbit 코멘트 확인
+2. 미처리된 CodeRabbit 리뷰가 있으면 각 코멘트를 판단:
+   - **Major** (보안, 로직 결함, 권한 범위): 코드 수정 → 추가 커밋 → 푸시
+   - **Minor** (lint 경고, 코드 펜스 태그 등): 코드 수정 → 추가 커밋 → 푸시
+   - **Nitpick/지엽적** (스타일 선호도): 무시
+   - **이미 삭제된 파일**: 무시
+3. 수정한 경우 커밋 메시지: `fix: CodeRabbit 리뷰 반영`
+
+### 3-2. PR 본문 업데이트
+
+1. `git diff develop...HEAD --stat`과 `git log develop..HEAD --oneline`으로 전체 변경 범위 재분석
+2. PR 본문의 **변경 사항**, **변경 이유** 섹션을 현재 전체 커밋 내용에 맞게 업데이트
+3. `gh pr edit <번호> --body`로 반영
+4. 조직 PR 템플릿 형식 유지 (PR 유형, 관련 이슈, 작업 내용, 스크린샷, 체크리스트, 리뷰어 메모)
 
 ## 주의사항
 
