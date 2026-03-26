@@ -55,9 +55,32 @@ types/            TypeScript 타입 정의
 
 ## Git 컨벤션
 
-- **브랜치**: `feature/*`, `fix/*`, `refactor/*` (develop에서 분기)
-- **커밋**: `feat:`, `fix:`, `refactor:`, `chore:`, `docs:` + 한글 메시지
-- **PR**: develop 브랜치로 머지, 조직 PR 템플릿 사용
-- **MCP**: Figma, Notion 연결됨
+### 커밋 메시지
+
+접두사: `feat:`, `fix:`, `refactor:`, `design:`, `style:`, `comment:`, `test:`, `chore:`, `init:`, `rename:`, `remove:`
+
+```text
+feat: 로그인 기능 추가
+fix: 유저 데이터 페칭 오류 수정
+```
+
+Ruleset: `^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([\w\p{Hangul}\-\.]+\))?(!)?: [\w\p{Hangul} ]+([\s\S]*)`
+
+### 브랜치
+
+- `feature/*` — 기능 개발 (develop에서 분기)
+- `hotfix/*` — 긴급 수정 (main에서 분기, main + develop 반영)
+- `chore/*`, `docs/*` — 설정/문서
+- `release/*` — 배포 전 점검 (예: `release/v1-0-0`)
+- 형식: `feature/FE-12-login-page`, `hotfix/BE-4-fix-null-pointer`
+
+### PR
+
+- develop 브랜치로 머지
+- 조직 PR 템플릿 사용 (PR 유형, 관련 이슈, 작업 내용, 스크린샷, 체크리스트)
+
+### MCP
+
+- Figma, Notion 연결됨
 
 세부 규칙은 `.claude/rules/` 참조.
