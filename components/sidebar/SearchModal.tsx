@@ -36,7 +36,6 @@ export function SearchModal({
     onClose();
   }, [onClose]);
 
-  // ESC 키로 닫기
   useEffect(() => {
     if (!open) return;
 
@@ -48,7 +47,6 @@ export function SearchModal({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, handleClose]);
 
-  // 스크롤 잠금
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -58,20 +56,24 @@ export function SearchModal({
     }
   }, [open]);
 
+  const modalRef = useRef<HTMLDivElement>(null);
+
   if (!open) return null;
 
-  // 트리거 위치 → 모달 목표 위치 간 오프셋 계산
-  const modalTargetX = window.innerWidth / 2;
-  const modalTargetY = window.innerHeight * 0.15 + 24; // pt-[15vh] + 약간의 여백
+  const modalWidth = Math.min(480, window.innerWidth - 32);
+  const modalLeft = (window.innerWidth - modalWidth) / 2;
+  const modalTop = window.innerHeight * 0.15;
 
-  const originX = triggerRect
-    ? triggerRect.left + triggerRect.width / 2 - modalTargetX
-    : 0;
-  const originY = triggerRect
-    ? triggerRect.top + triggerRect.height / 2 - modalTargetY
-    : 40;
-  const scaleX = triggerRect ? triggerRect.width / 480 : 0.5;
-  const scaleY = triggerRect ? triggerRect.height / 48 : 0.5;
+  const triggerCenterX = triggerRect
+    ? triggerRect.left + triggerRect.width / 2
+    : modalLeft;
+  const triggerCenterY = triggerRect
+    ? triggerRect.top + triggerRect.height / 2
+    : modalTop;
+
+  const originPercX = ((triggerCenterX - modalLeft) / modalWidth) * 100;
+  const originPercY = ((triggerCenterY - modalTop) / 48) * 100;
+  const transformOrigin = `${originPercX}% ${Math.max(0, originPercY)}%`;
 
   return (
     <motion.div
@@ -81,42 +83,22 @@ export function SearchModal({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
     >
-      {/* 배경 딤 */}
       <div
         className="absolute inset-0 bg-black/40"
         onClick={handleClose}
       />
 
-      {/* 모달 */}
       <motion.div
+        ref={modalRef}
         className="relative w-full max-w-120 px-4"
-        initial={{
-          x: originX,
-          y: originY,
-          scaleX,
-          scaleY,
-          opacity: 0,
-        }}
-        animate={{
-          x: 0,
-          y: 0,
-          scaleX: 1,
-          scaleY: 1,
-          opacity: 1,
-        }}
-        exit={{
-          x: originX,
-          y: originY,
-          scaleX,
-          scaleY,
-          opacity: 0,
-        }}
+        initial={{ scale: 0.35, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.35, opacity: 0 }}
         transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
-        style={{ borderRadius: 16, transformOrigin: "top left" }}
+        style={{ borderRadius: 16, transformOrigin }}
         onAnimationComplete={() => inputRef.current?.focus()}
       >
         <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
-          {/* 검색 입력 */}
           <div className="flex items-center gap-3 border-b border-border px-4 py-3">
             <Search className="size-[18px] shrink-0 text-muted-foreground" />
             <input
@@ -135,14 +117,12 @@ export function SearchModal({
             </button>
           </div>
 
-          {/* 결과 목록 */}
           <motion.div
             className="max-h-[50vh] overflow-y-auto p-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.2 }}
           >
-            {/* 새 채팅 */}
             <button
               onClick={() => {
                 router.push("/chat");
@@ -154,7 +134,6 @@ export function SearchModal({
               새 채팅
             </button>
 
-            {/* 히스토리 섹션 */}
             {filtered.length > 0 && (
               <>
                 <p className="px-3 pt-3 pb-1 text-xs text-muted-foreground">
@@ -176,7 +155,6 @@ export function SearchModal({
               </>
             )}
 
-            {/* 검색 결과 없음 */}
             {query && filtered.length === 0 && (
               <p className="px-3 py-6 text-center text-sm text-muted-foreground">
                 검색 결과가 없습니다

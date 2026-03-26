@@ -1,14 +1,10 @@
-// ==============================================
-// 더미 데이터 모음 (TODO: 실제 API 연동 시 제거)
-// ==============================================
+// TODO: 실제 API 연동 시 제거
 
-/** 구글 OAuth 모의 사용자 */
 export const MOCK_GOOGLE_USER = {
   name: "홍길동",
   email: "honggildong@kookmin.ac.kr",
 } as const;
 
-/** 채팅 Welcome 추천 질문 (TODO: 추천 top5 질문 API 연동) */
 export const MOCK_SUGGESTIONS = [
   "이번 학기 휴학 신청 언제까지야?",
   "수강신청 방법 알려줘",
@@ -16,7 +12,6 @@ export const MOCK_SUGGESTIONS = [
   "졸업 요건 알려줘",
 ] as const;
 
-/** 채팅 히스토리 목록 */
 export const MOCK_CHAT_HISTORY = [
   { id: "1", title: "새 대화" },
   { id: "2", title: "1학기 휴학 신청 기간" },

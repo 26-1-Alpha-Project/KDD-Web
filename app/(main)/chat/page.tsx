@@ -5,8 +5,6 @@ import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatWelcome } from "@/components/chat/ChatWelcome";
 import { ChatInput } from "@/components/chat/ChatInput";
 
-// 메인 채팅 페이지 — 새 채팅 / Welcome Message
-// 유저플로우: 로그인 완료 → Welcome Message 표시 → 질문 입력
 export default function ChatPage() {
   const router = useRouter();
 
@@ -25,7 +23,7 @@ export default function ChatPage() {
       <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-4 pt-6">
         <ChatWelcome onSuggestionClick={handleSuggestionClick} />
       </div>
-      <div className="mx-auto w-full max-w-3xl shrink-0 px-8 pb-6 pt-2">
+      <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-6 pt-2 md:px-8">
         <ChatInput onSend={handleSend} />
       </div>
     </div>

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   Search,
   SquarePen,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MOCK_CHAT_HISTORY } from "@/constants/mock";
+import { useSidebar } from "./SidebarContext";
 import { ChatHistory } from "./ChatHistory";
 import { SearchModal } from "./SearchModal";
 
@@ -24,7 +25,7 @@ const NAV_ITEMS = [
   { href: "/settings", label: "설정", icon: Settings },
 ] as const;
 
-export function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -39,8 +40,8 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="flex h-full w-[260px] shrink-0 flex-col border-r border-black/10 bg-white">
-        {/* 검색 트리거 — 항상 렌더링, 모달 열리면 투명하게 */}
+      <aside className="flex h-full w-[260px] shrink-0 flex-col bg-white">
+
         <div className="px-4 pt-6 pb-2">
           <button
             ref={triggerRef}
@@ -52,7 +53,6 @@ export function Sidebar() {
           </button>
         </div>
 
-        {/* 내비게이션 */}
         <nav className="flex flex-col gap-0.5 px-3 pt-2">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const isActive =
@@ -64,6 +64,7 @@ export function Sidebar() {
               <Link
                 key={href}
                 href={href}
+                onClick={onNavigate}
                 className={cn(
                   "flex h-[37px] items-center gap-3 rounded-[10px] px-3 text-sm font-medium text-foreground transition-colors",
                   "hover:bg-secondary",
@@ -77,10 +78,8 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* 채팅 히스토리 */}
-        <ChatHistory items={MOCK_CHAT_HISTORY} />
+        <ChatHistory items={MOCK_CHAT_HISTORY} onNavigate={onNavigate} />
 
-        {/* 로그아웃 */}
         <div className="mt-auto px-4 pb-4">
           <button className="flex h-9 w-full items-center justify-center gap-2 rounded-[10px] border border-black/10 text-xs font-medium text-foreground transition-colors hover:bg-secondary">
             <LogOut className="size-3.5" />
@@ -97,6 +96,42 @@ export function Sidebar() {
             chatHistory={MOCK_CHAT_HISTORY}
             triggerRect={triggerRect}
           />
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+export function Sidebar() {
+  const { open, setOpen } = useSidebar();
+
+  return (
+    <>
+      <div className="hidden md:flex h-full shrink-0 border-r border-black/10">
+        <SidebarContent />
+      </div>
+
+      <AnimatePresence>
+        {open && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <motion.div
+              className="absolute inset-0 bg-black/40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setOpen(false)}
+            />
+            <motion.div
+              className="absolute left-0 top-0 h-full shadow-xl"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", duration: 0.35, bounce: 0.1 }}
+            >
+              <SidebarContent onNavigate={() => setOpen(false)} />
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>

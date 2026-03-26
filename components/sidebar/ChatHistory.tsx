@@ -11,9 +11,10 @@ interface ChatHistoryItem {
 
 interface ChatHistoryProps {
   items: readonly ChatHistoryItem[];
+  onNavigate?: () => void;
 }
 
-export function ChatHistory({ items }: ChatHistoryProps) {
+export function ChatHistory({ items, onNavigate }: ChatHistoryProps) {
   const params = useParams();
   const activeChatId = params?.id as string | undefined;
 
@@ -28,6 +29,7 @@ export function ChatHistory({ items }: ChatHistoryProps) {
             <Link
               key={item.id}
               href={`/chat/${item.id}`}
+              onClick={onNavigate}
               className={cn(
                 "flex h-[37px] items-center truncate rounded-lg px-3 text-sm font-medium text-foreground transition-colors",
                 "hover:bg-secondary/80",

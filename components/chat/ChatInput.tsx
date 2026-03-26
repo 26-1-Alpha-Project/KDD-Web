@@ -19,7 +19,6 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
     if (!canSend) return;
     onSend?.(value.trim());
     setValue("");
-    // 높이 리셋
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
@@ -33,7 +32,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <div className="flex items-end gap-6 rounded-[28px] border border-gray-100 bg-white px-9 py-3 shadow-[0px_2px_12px_0px_rgba(0,0,0,0.08)]">
+    <div className="flex items-end gap-4 rounded-[28px] border border-gray-100 bg-white px-5 py-3 shadow-[0px_2px_12px_0px_rgba(0,0,0,0.08)] md:gap-6 md:px-9">
       <textarea
         ref={textareaRef}
         value={value}
