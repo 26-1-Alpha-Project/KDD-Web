@@ -22,7 +22,7 @@ npm run lint     # ESLint
 
 ## 디렉토리 구조
 
-```
+```text
 app/(auth)/       인증 라우트 (로그인, 프로필 설정)
 app/(main)/       메인 라우트 (chat, resources, faq, settings) — 사이드바 레이아웃
 app/admin/        관리자 라우트

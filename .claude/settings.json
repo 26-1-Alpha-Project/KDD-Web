@@ -3,14 +3,27 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(npx shadcn@latest *)",
-      "Bash(git *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git fetch *)",
+      "Bash(git stash *)",
+      "Bash(git merge *)",
       "Bash(gh pr *)",
       "Bash(gh issue *)"
     ],
     "deny": [
       "Bash(rm -rf *)",
       "Bash(git push --force *)",
-      "Bash(git reset --hard *)"
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)"
     ]
   }
 }
