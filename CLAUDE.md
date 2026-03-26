@@ -64,7 +64,7 @@ feat: 로그인 기능 추가
 fix: 유저 데이터 페칭 오류 수정
 ```
 
-Ruleset: `^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([\w\p{Hangul}\-\.]+\))?(!)?: [\w\p{Hangul} ]+([\s\S]*)`
+Ruleset: `^(build|chore|ci|comment|design|docs|feat|fix|init|perf|refactor|remove|rename|revert|style|test)(\([\w\p{Hangul}\-\.]+\))?(!)?: [\w\p{Hangul} ]+([\s\S]*)`
 
 ### 브랜치
 
