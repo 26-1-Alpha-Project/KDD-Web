@@ -25,5 +25,18 @@
       "Bash(git reset --hard *)",
       "Bash(git clean *)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-edit.sh\""
+          }
+        ]
+      }
+    ]
   }
 }
