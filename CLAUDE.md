@@ -83,4 +83,12 @@ Ruleset: `^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([\w\
 
 - Figma, Notion 연결됨
 
+## 피드백 학습
+
+사용자가 코드를 수정하거나 접근 방식을 교정하면, 그 피드백을 memory에 기록하여 같은 실수를 반복하지 않는다. 특히:
+
+- "이거 아니야", "그거 말고" 같은 교정 → 즉시 feedback memory 저장
+- 기존 유틸/컴포넌트를 무시하고 새로 만든 경우 → 어떤 기존 코드를 사용했어야 했는지 기록
+- API 타입을 임의로 변경한 경우 → 올바른 타입 구조 기록
+
 세부 규칙은 `.claude/rules/` 참조.
