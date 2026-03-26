@@ -61,11 +61,13 @@ rename: ChatBox를 ChatInput으로 변경
 
 1. `gh api repos/{owner}/{repo}/pulls/{number}/comments`로 CodeRabbit 코멘트 확인
 2. 미처리된 CodeRabbit 리뷰가 있으면 각 코멘트를 판단:
-   - **Major** (보안, 로직 결함, 권한 범위): 코드 수정 → 추가 커밋 → 푸시
-   - **Minor** (lint 경고, 코드 펜스 태그 등): 코드 수정 → 추가 커밋 → 푸시
-   - **Nitpick/지엽적** (스타일 선호도): 무시
-   - **이미 삭제된 파일**: 무시
-3. 수정한 경우 커밋 메시지: `fix: CodeRabbit 리뷰 반영`
+   - **수정**: 실제 버그, 보안 취약점, 런타임 오류를 유발하는 문제
+   - **무시**: 스타일 선호도, 지엽적 제안, 이미 삭제된 파일, 프로젝트 맥락상 불필요한 지적
+   - Major/Minor 라벨에 관계없이 **실제 영향도**로 판단한다
+3. 수정한 경우: 코드 수정 → 추가 커밋(`fix: CodeRabbit 리뷰 반영`) → 푸시
+4. 처리 완료된 리뷰 스레드는 GraphQL API로 resolve 처리:
+   - `gh api graphql`로 unresolved 스레드 조회
+   - 수정/무시 여부와 관계없이 확인한 스레드는 모두 resolve
 
 ### 3-2. PR 본문 업데이트
 
