@@ -1,17 +1,25 @@
-// (main) 그룹 레이아웃 — 사이드바가 포함된 공통 쉘
-// 사이드바 메뉴: 새 채팅, 자료, FAQ, 설정, (관리자)
+"use client";
+
+import { useState } from "react";
+import { Sidebar } from "@/components/sidebar/Sidebar";
+import { SidebarContext } from "@/components/sidebar/SidebarContext";
+
 // TODO: <TourProvider> 감싸기
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    // TODO: <TourProvider>
-    <div>
-      {/* TODO: Sidebar */}
-      <main>{children}</main>
-    </div>
-    // TODO: </TourProvider>
+    <SidebarContext.Provider
+      value={{ open: sidebarOpen, setOpen: setSidebarOpen }}
+    >
+      <div className="flex h-dvh bg-white">
+        <Sidebar />
+        <main className="flex min-w-0 flex-1 flex-col">{children}</main>
+      </div>
+    </SidebarContext.Provider>
   );
 }

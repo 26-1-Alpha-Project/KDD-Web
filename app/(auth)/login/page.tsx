@@ -31,11 +31,7 @@ const slides = [
   },
 ];
 
-// TODO: Replace with actual Google OAuth data
-const MOCK_GOOGLE_USER = {
-  name: "홍길동",
-  email: "honggildong@kookmin.ac.kr",
-};
+import { MOCK_GOOGLE_USER } from "@/constants/mock";
 
 export default function LoginPage() {
   const router = useRouter();
