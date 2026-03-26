@@ -49,7 +49,21 @@ chore: Claude Code 하네스 엔지니어링 설정 추가
 rename: ChatBox를 ChatInput으로 변경
 ```
 
+## 기존 PR 업데이트
+
+커밋 + 푸시 후, 현재 브랜치에 열린 PR이 있는지 확인한다:
+
+1. `gh pr list --head <현재브랜치> --state open --json number,title`로 확인
+2. 열린 PR이 있으면:
+   - `gh pr view <번호>`로 기존 PR 본문 확인
+   - `git diff develop...HEAD --stat`과 `git log develop..HEAD --oneline`으로 전체 변경 범위 재분석
+   - PR 본문의 **변경 사항**, **변경 이유** 섹션을 현재 전체 커밋 내용에 맞게 업데이트
+   - `gh pr edit <번호> --body`로 반영
+   - 조직 PR 템플릿 형식 유지 (PR 유형, 관련 이슈, 작업 내용, 스크린샷, 체크리스트, 리뷰어 메모)
+3. 열린 PR이 없으면: 아무것도 하지 않음
+
 ## 주의사항
+
 - 논리적으로 분리 가능한 변경은 여러 커밋으로 분할
 - `.env*` 파일이 포함되어 있으면 경고 후 제외
 - `console.log`가 남아있으면 사용자에게 알림
