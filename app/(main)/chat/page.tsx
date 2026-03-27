@@ -19,8 +19,11 @@ export default function ChatPage() {
       <ChatHeader />
       <div className="mx-auto flex flex-1 max-w-3xl flex-col overflow-y-auto px-4 pt-6">
         <ChatWelcome onSuggestionClick={handleSend} />
+        <ChatInput
+          onSend={handleSend}
+          className="shrink-0 mx-auto w-[calc(100%-2rem)] max-w-184 mt-2 mb-6"
+        />
       </div>
-      <ChatInput onSend={handleSend} className="shrink-0 mx-4 md:mx-auto max-w-3xl mt-2 mb-6" />
     </div>
   );
 }

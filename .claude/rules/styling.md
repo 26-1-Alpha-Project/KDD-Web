@@ -36,6 +36,12 @@ globs: ["**/*.tsx", "**/*.css"]
 - 클래스를 기존 요소에 직접 적용할 수 있으면 중첩 div 추가 금지
 - 예: `<div className="sticky"><div className="mx-auto"><Input/></div></div>` → `<div className="sticky mx-auto"><Input/></div>`
 
+## bg가 있는 요소의 spacing
+- `bg-*`가 있는 요소에 `px-*`/`py-*`를 넣으면 배경색이 패딩 영역까지 확장된다
+- 외부 여백이 필요하면 반드시 `margin`(`mx-*`, `my-*`) 또는 `w-[calc(100%-Nrem)]`을 사용한다
+- `padding`은 요소 내부 콘텐츠 간격에만 사용한다
+- 예: `bg-white px-4` (배경 확장됨) → `bg-white mx-auto w-[calc(100%-2rem)]` (배경은 콘텐츠만)
+
 ## 금지
 - CSS Modules (`.module.css`)
 - styled-components
