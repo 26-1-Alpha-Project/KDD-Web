@@ -35,6 +35,10 @@ export function ComponentName({ onSend }: ComponentNameProps) {
 - `motion/react`에서 임포트 (`framer-motion` 아님)
 - exit 애니메이션은 `AnimatePresence`로 래핑
 
+## 금지 API
+- `window.prompt`, `window.alert`, `window.confirm` 등 브라우저 네이티브 다이얼로그 사용 금지
+- 사용자 입력이 필요하면 인라인 편집, 커스텀 모달, 또는 UI 컴포넌트로 구현
+
 ## 기존 패턴 참조
 - 기본 컴포넌트: `components/chat/ChatHeader.tsx`
 - Props + 콜백: `components/chat/ChatInput.tsx`
