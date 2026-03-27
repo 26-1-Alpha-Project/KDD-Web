@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 interface ChatInputProps {
   onSend?: (message: string) => void;
   disabled?: boolean;
+  className?: string;
 }
 
-export function ChatInput({ onSend, disabled }: ChatInputProps) {
+export function ChatInput({ onSend, disabled, className }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -40,7 +41,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   return (
     <div
       onClick={handleContainerClick}
-      className="flex cursor-text items-center gap-4 rounded-[28px] border border-border bg-white px-5 py-3 shadow-[0px_2px_12px_0px_rgba(0,0,0,0.08)]"
+      className={cn("flex cursor-text items-center gap-4 rounded-[28px] border border-border bg-white px-5 py-3 shadow-[0px_2px_12px_0px_rgba(0,0,0,0.08)]", className)}
     >
       <textarea
         ref={textareaRef}

@@ -77,9 +77,7 @@ export default function ChatDetailPage({ params }: Props) {
           <ChatMessageList messages={messages} />
         </div>
       )}
-      <div className="shrink-0 mx-auto w-full max-w-3xl px-4 pt-2 pb-6">
-        <ChatInput onSend={handleSend} />
-      </div>
+      <ChatInput onSend={handleSend} className="shrink-0 mx-auto w-full max-w-3xl px-4 mt-2 mb-6" />
     </div>
   );
 }
