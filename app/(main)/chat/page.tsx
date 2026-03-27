@@ -20,7 +20,7 @@ export default function ChatPage() {
       <div className="mx-auto flex flex-1 max-w-3xl flex-col overflow-y-auto px-4 pt-6">
         <ChatWelcome onSuggestionClick={handleSend} />
       </div>
-      <div className="shrink-0 mx-auto w-full max-w-3xl px-4 pt-2 pb-6 md:px-8">
+      <div className="shrink-0 mx-auto w-full max-w-3xl px-4 pt-2 pb-6">
         <ChatInput onSend={handleSend} />
       </div>
     </div>
