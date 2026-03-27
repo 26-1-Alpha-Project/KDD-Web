@@ -89,10 +89,12 @@ body {
 }
 
 /* 스크롤바 완전 숨김 유틸리티 — Tailwind scrollbar-none 보강 */
-.scrollbar-none {
-  scrollbar-width: none !important;
+.scrollbar-none,
+.scrollbar-none:hover {
+  scrollbar-width: none;
 }
 
-.scrollbar-none::-webkit-scrollbar {
-  display: none !important;
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-none:hover::-webkit-scrollbar {
+  display: none;
 }
