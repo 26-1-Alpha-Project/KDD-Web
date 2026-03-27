@@ -40,7 +40,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         onKeyDown={handleKeyDown}
         placeholder="메시지를 입력하세요..."
         rows={1}
-        className="max-h-40 flex-1 resize-none overflow-y-auto bg-transparent text-base leading-6 text-foreground outline-none field-sizing-content placeholder:text-[#99a1af]"
+        className="max-h-40 flex-1 resize-none overflow-hidden bg-transparent text-base leading-6 text-foreground outline-none field-sizing-content placeholder:text-[#99a1af]"
       />
       <button
         onClick={handleSend}
