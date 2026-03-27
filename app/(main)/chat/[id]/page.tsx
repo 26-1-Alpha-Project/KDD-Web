@@ -33,19 +33,21 @@ export default function ChatDetailPage({ params }: Props) {
   }, []);
 
   const handleSend = (content: string) => {
+    const trimmed = content.trim();
+    if (!trimmed) return;
     const isFirstMessage = messages.length === 0;
 
     const userMessage: ChatMessage = {
       id: `${id}-${Date.now()}`,
       role: "user",
-      content,
+      content: trimmed,
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMessage]);
 
     if (isFirstMessage) {
       const title =
-        content.length > 20 ? content.slice(0, 20) + "..." : content;
+        trimmed.length > 20 ? trimmed.slice(0, 20) + "..." : trimmed;
       addChat(id, title);
     }
 

@@ -62,8 +62,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
             {sourcesOpen && (
               <div className="mt-2 flex flex-col gap-2">
-                {message.sources!.map((source) => (
-                  <SourceCard key={source.title} source={source} />
+                {message.sources!.map((source, idx) => (
+                  <SourceCard key={`${source.title}-${idx}`} source={source} />
                 ))}
               </div>
             )}
