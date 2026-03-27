@@ -9,8 +9,9 @@ export default function ChatPage() {
   const router = useRouter();
 
   const handleSend = (message: string) => {
-    // TODO: 실제 채팅 API 연동 후 채팅 생성 → /chat/[id]로 이동
-    console.log("send:", message);
+    // TODO: 실제 채팅 API 연동 후 새 세션 생성 → /chat/[id]로 이동
+    const newId = `new-${Date.now()}`;
+    router.push(`/chat/${newId}?q=${encodeURIComponent(message)}`);
   };
 
   const handleSuggestionClick = (text: string) => {

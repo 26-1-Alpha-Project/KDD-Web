@@ -1,19 +1,66 @@
-// 채팅 상세 페이지 — 기존 채팅 불러오기 (Streaming UI)
-// 유저플로우: 사이드바 채팅 이력 선택 → 채팅 표시
-// 기능:
-//   - 메시지 스트리밍 표시
-//   - 답변 신뢰도 배지 (🟢 확신, 🟡 조건부, 🔴 문의 필요)
-//   - 출처 표시 (Grounding) — 자료 페이지 URL 제공
-//   - 정보 부족 시 추가 정보 요청 UI
-//   - 규정 한계 시 문의 방법 안내
-//   - 유사 질문 추천 (질문 빈도 기반)
+"use client";
+
+import { use, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { ChatHeader } from "@/components/chat/ChatHeader";
+import { ChatInput } from "@/components/chat/ChatInput";
+import { ChatMessageList } from "@/components/chat/ChatMessageList";
+import { MOCK_CHAT_SESSIONS } from "@/constants/mock";
+import type { ChatMessage } from "@/types/chat";
+
 type Props = { params: Promise<{ id: string }> };
 
-export default async function ChatDetailPage({ params }: Props) {
-  const { id } = await params;
+export default function ChatDetailPage({ params }: Props) {
+  const { id } = use(params);
+  const searchParams = useSearchParams();
+  const session = MOCK_CHAT_SESSIONS[id];
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    session?.messages ?? []
+  );
+  const initialQueryHandled = useRef(false);
+
+  useEffect(() => {
+    if (initialQueryHandled.current) return;
+    const q = searchParams.get("q");
+    if (q && messages.length === 0) {
+      initialQueryHandled.current = true;
+      handleSend(q);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSend = (content: string) => {
+    const userMessage: ChatMessage = {
+      id: `${id}-${Date.now()}`,
+      role: "user",
+      content,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    // TODO: API 연동 시 실제 응답으로 교체
+    setTimeout(() => {
+      const assistantMessage: ChatMessage = {
+        id: `${id}-${Date.now()}-reply`,
+        role: "assistant",
+        content:
+          "안녕하세요! 국민대학교 학사 규정에 대해 도움을 드리겠습니다.\n\n질문을 좀 더 구체적으로 해주시면 정확한 답변을 드릴 수 있습니다. 예를 들어:\n\n• \"이번 학기 휴학 신청 기간이 언제야?\"\n• \"수강신청 방법 알려줘\"\n• \"장학금 종류가 뭐가 있어?\"",
+        confidence: "medium",
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    }, 800);
+  };
+
   return (
-    <div>
-      <h1>채팅 #{id}</h1>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <ChatHeader />
+      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-4 pt-6">
+        <ChatMessageList messages={messages} />
+      </div>
+      <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-6 pt-2 md:px-8">
+        <ChatInput onSend={handleSend} />
+      </div>
     </div>
   );
 }
