@@ -69,15 +69,15 @@ export default function ChatDetailPage({ params }: Props) {
     <div className="flex min-h-0 flex-1 flex-col">
       <ChatHeader />
       <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="mx-auto flex-1 max-w-3xl px-4 pt-6">
-          {isEmpty ? (
-            <div className="flex h-full flex-col">
-              <ChatWelcome onSuggestionClick={handleSend} />
-            </div>
-          ) : (
+        {isEmpty ? (
+          <div className="mx-auto flex flex-1 max-w-3xl flex-col px-4 pt-6">
+            <ChatWelcome onSuggestionClick={handleSend} />
+          </div>
+        ) : (
+          <div className="mx-auto max-w-3xl px-4 pt-6">
             <ChatMessageList messages={messages} />
-          )}
-        </div>
+          </div>
+        )}
         <div className="sticky bottom-0 mx-auto w-full max-w-3xl px-4 pt-4 pb-6 md:px-8">
           <ChatInput onSend={handleSend} />
         </div>
