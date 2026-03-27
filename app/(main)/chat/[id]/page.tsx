@@ -68,16 +68,23 @@ export default function ChatDetailPage({ params }: Props) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <ChatHeader />
-      {isEmpty ? (
-        <div className="mx-auto flex flex-1 max-w-3xl flex-col overflow-y-auto px-4 pt-6">
-          <ChatWelcome onSuggestionClick={handleSend} />
+      <div className="relative min-h-0 flex-1">
+        <div className="h-full overflow-y-auto pb-24">
+          {isEmpty ? (
+            <div className="mx-auto flex h-full max-w-3xl flex-col px-4 pt-6">
+              <ChatWelcome onSuggestionClick={handleSend} />
+            </div>
+          ) : (
+            <div className="mx-auto max-w-3xl px-4 pt-6">
+              <ChatMessageList messages={messages} />
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="mx-auto flex-1 w-full max-w-3xl overflow-y-auto px-4 pt-6 pb-4">
-          <ChatMessageList messages={messages} />
-        </div>
-      )}
-      <ChatInput onSend={handleSend} className="shrink-0 mx-auto w-[calc(100%-2rem)] max-w-184 mt-2 mb-6" />
+        <ChatInput
+          onSend={handleSend}
+          className="absolute inset-x-0 bottom-6 mx-auto w-[calc(100%-2rem)] max-w-184"
+        />
+      </div>
     </div>
   );
 }

@@ -17,11 +17,13 @@ export default function ChatPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <ChatHeader />
-      <div className="mx-auto flex flex-1 max-w-3xl flex-col overflow-y-auto px-4 pt-6">
-        <ChatWelcome onSuggestionClick={handleSend} />
+      <div className="relative min-h-0 flex-1">
+        <div className="mx-auto flex h-full max-w-3xl flex-col overflow-y-auto px-4 pt-6 pb-24">
+          <ChatWelcome onSuggestionClick={handleSend} />
+        </div>
         <ChatInput
           onSend={handleSend}
-          className="shrink-0 mx-auto w-[calc(100%-2rem)] max-w-184 mt-2 mb-6"
+          className="absolute inset-x-0 bottom-6 mx-auto w-[calc(100%-2rem)] max-w-184"
         />
       </div>
     </div>
