@@ -4,7 +4,9 @@ import { use, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { ChatWelcome } from "@/components/chat/ChatWelcome";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
+import { useChatContext } from "@/components/chat/ChatContext";
 import { MOCK_CHAT_SESSIONS } from "@/constants/mock";
 import type { ChatMessage } from "@/types/chat";
 
@@ -13,6 +15,7 @@ type Props = { params: Promise<{ id: string }> };
 export default function ChatDetailPage({ params }: Props) {
   const { id } = use(params);
   const searchParams = useSearchParams();
+  const { addChat } = useChatContext();
   const session = MOCK_CHAT_SESSIONS[id];
   const [messages, setMessages] = useState<ChatMessage[]>(
     session?.messages ?? []
@@ -30,6 +33,8 @@ export default function ChatDetailPage({ params }: Props) {
   }, []);
 
   const handleSend = (content: string) => {
+    const isFirstMessage = messages.length === 0;
+
     const userMessage: ChatMessage = {
       id: `${id}-${Date.now()}`,
       role: "user",
@@ -37,6 +42,12 @@ export default function ChatDetailPage({ params }: Props) {
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMessage]);
+
+    if (isFirstMessage) {
+      const title =
+        content.length > 20 ? content.slice(0, 20) + "..." : content;
+      addChat(id, title);
+    }
 
     // TODO: API 연동 시 실제 응답으로 교체
     setTimeout(() => {
@@ -52,11 +63,17 @@ export default function ChatDetailPage({ params }: Props) {
     }, 800);
   };
 
+  const isEmpty = messages.length === 0;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <ChatHeader />
       <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-4 pt-6">
-        <ChatMessageList messages={messages} />
+        {isEmpty ? (
+          <ChatWelcome onSuggestionClick={handleSend} />
+        ) : (
+          <ChatMessageList messages={messages} />
+        )}
       </div>
       <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-6 pt-2 md:px-8">
         <ChatInput onSend={handleSend} />

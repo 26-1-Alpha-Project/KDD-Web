@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { SidebarContext } from "@/components/sidebar/SidebarContext";
+import { ChatProvider } from "@/components/chat/ChatContext";
 
 // TODO: <TourProvider> 감싸기
 export default function MainLayout({
@@ -16,10 +17,12 @@ export default function MainLayout({
     <SidebarContext.Provider
       value={{ open: sidebarOpen, setOpen: setSidebarOpen }}
     >
-      <div className="flex h-dvh bg-white">
-        <Sidebar />
-        <main className="flex min-w-0 flex-1 flex-col">{children}</main>
-      </div>
+      <ChatProvider>
+        <div className="flex h-dvh bg-white">
+          <Sidebar />
+          <main className="flex min-w-0 h-dvh flex-1 flex-col">{children}</main>
+        </div>
+      </ChatProvider>
     </SidebarContext.Provider>
   );
 }
