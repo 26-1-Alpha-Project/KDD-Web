@@ -4,14 +4,12 @@ import { useEffect, useRef } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 
 interface ChatItemMenuProps {
-  anchorRect: DOMRect;
   onRename: () => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
 export function ChatItemMenu({
-  anchorRect,
   onRename,
   onDelete,
   onClose,
@@ -37,14 +35,10 @@ export function ChatItemMenu({
     };
   }, [onClose]);
 
-  const top = anchorRect.bottom + 4;
-  const left = anchorRect.left;
-
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 min-w-[140px] overflow-hidden rounded-xl border border-border bg-popover py-1 shadow-lg"
-      style={{ top, left }}
+      className="absolute right-0 top-full z-50 mt-1 min-w-[140px] overflow-hidden rounded-xl border border-border bg-popover py-1 shadow-lg"
     >
       <button
         onClick={() => {

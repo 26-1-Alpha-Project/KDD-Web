@@ -28,32 +28,22 @@ export function ChatHistory({
   const params = useParams();
   const activeChatId = params?.id as string | undefined;
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const [menuAnchorRect, setMenuAnchorRect] = useState<DOMRect | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
-  const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-
-  const handleMenuToggle = (id: string) => {
-    if (menuOpenId === id) {
-      setMenuOpenId(null);
-      return;
-    }
-    const btn = buttonRefs.current.get(id);
-    if (btn) {
-      setMenuAnchorRect(btn.getBoundingClientRect());
-      setMenuOpenId(id);
-    }
-  };
+  const renameHandledRef = useRef(false);
 
   const startRename = (id: string) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
+    renameHandledRef.current = false;
     setEditingId(id);
     setEditValue(item.title);
   };
 
   const commitRename = () => {
+    if (renameHandledRef.current) return;
+    renameHandledRef.current = true;
     if (editingId && editValue.trim()) {
       onRename?.(editingId, editValue.trim());
     }
@@ -62,6 +52,8 @@ export function ChatHistory({
   };
 
   const cancelRename = () => {
+    if (renameHandledRef.current) return;
+    renameHandledRef.current = true;
     setEditingId(null);
     setEditValue("");
   };
@@ -96,7 +88,7 @@ export function ChatHistory({
                     if (e.key === "Enter") commitRename();
                     if (e.key === "Escape") cancelRename();
                   }}
-                  className="flex h-[37px] w-full items-center rounded-lg border border-ring bg-white px-3 text-sm font-medium text-foreground outline-none"
+                  className="flex h-[37px] w-full items-center rounded-lg border border-ring bg-background px-3 text-sm font-medium text-foreground outline-none"
                 />
               ) : (
                 <>
@@ -106,24 +98,22 @@ export function ChatHistory({
                     className={cn(
                       "flex h-[37px] w-full items-center truncate rounded-lg px-3 pr-8 text-sm font-medium text-foreground transition-colors",
                       "hover:bg-secondary/80",
-                      isActive && "bg-[#f3f3f5]"
+                      isActive && "bg-secondary"
                     )}
                   >
                     {item.title}
                   </Link>
 
                   <button
-                    ref={(el) => {
-                      if (el) buttonRefs.current.set(item.id, el);
-                      else buttonRefs.current.delete(item.id);
-                    }}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleMenuToggle(item.id);
+                      setMenuOpenId((prev) =>
+                        prev === item.id ? null : item.id
+                      );
                     }}
                     className={cn(
-                      "absolute right-1 flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+                      "absolute right-1 flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:opacity-100",
                       menuOpenId === item.id
                         ? "opacity-100"
                         : "opacity-0 group-hover:opacity-100"
@@ -133,9 +123,8 @@ export function ChatHistory({
                     <Ellipsis className="size-4" />
                   </button>
 
-                  {menuOpenId === item.id && menuAnchorRect && (
+                  {menuOpenId === item.id && (
                     <ChatItemMenu
-                      anchorRect={menuAnchorRect}
                       onRename={() => startRename(item.id)}
                       onDelete={() => onDelete?.(item.id)}
                       onClose={() => setMenuOpenId(null)}

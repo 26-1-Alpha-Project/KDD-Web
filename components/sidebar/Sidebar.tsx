@@ -126,6 +126,7 @@ function SidebarContent({
 
 export function Sidebar() {
   const { open, setOpen } = useSidebar();
+  const pathname = usePathname();
   const router = useRouter();
   const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([
     ...MOCK_CHAT_HISTORY,
@@ -135,9 +136,11 @@ export function Sidebar() {
     (id: string) => {
       setChatHistory((prev) => prev.filter((item) => item.id !== id));
       // TODO: API 연동 시 실제 삭제 호출
-      router.push("/chat");
+      if (pathname === `/chat/${id}`) {
+        router.push("/chat");
+      }
     },
-    [router]
+    [pathname, router]
   );
 
   const handleRenameChat = useCallback((id: string, newTitle: string) => {
