@@ -31,6 +31,11 @@ globs: ["**/*.tsx", "**/*.css"]
 - 사이드바: 모바일 오버레이, `md:` 이상 고정
 - 높이: `h-dvh` 사용 (`h-screen` 아님 — 모바일 주소창 고려)
 
+## DOM 구조
+- 스타일링만을 위한 불필요한 wrapper div를 만들지 않는다
+- 클래스를 기존 요소에 직접 적용할 수 있으면 중첩 div 추가 금지
+- 예: `<div className="sticky"><div className="mx-auto"><Input/></div></div>` → `<div className="sticky mx-auto"><Input/></div>`
+
 ## 금지
 - CSS Modules (`.module.css`)
 - styled-components

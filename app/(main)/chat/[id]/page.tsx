@@ -66,10 +66,10 @@ export default function ChatDetailPage({ params }: Props) {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <ChatHeader />
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 pt-6 pb-32">
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="mx-auto flex-1 max-w-3xl px-4 pt-6">
           {isEmpty ? (
             <div className="flex h-full flex-col">
               <ChatWelcome onSuggestionClick={handleSend} />
@@ -78,13 +78,8 @@ export default function ChatDetailPage({ params }: Props) {
             <ChatMessageList messages={messages} />
           )}
         </div>
-      </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0">
-        <div className="h-8 bg-gradient-to-t from-white to-transparent" />
-        <div className="bg-white pb-6 pt-2">
-          <div className="pointer-events-auto mx-auto w-full max-w-3xl px-4 md:px-8">
-            <ChatInput onSend={handleSend} />
-          </div>
+        <div className="sticky bottom-0 mx-auto w-full max-w-3xl px-4 pt-4 pb-6 md:px-8">
+          <ChatInput onSend={handleSend} />
         </div>
       </div>
     </div>
