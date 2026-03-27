@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
@@ -13,15 +13,10 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MOCK_CHAT_HISTORY } from "@/constants/mock";
 import { useSidebar } from "./SidebarContext";
 import { ChatHistory } from "./ChatHistory";
 import { SearchModal } from "./SearchModal";
-
-interface ChatHistoryItem {
-  id: string;
-  title: string;
-}
+import { useChatContext } from "@/components/chat/ChatContext";
 
 const NAV_ITEMS = [
   { href: "/chat", label: "새 채팅", icon: SquarePen },
@@ -32,18 +27,12 @@ const NAV_ITEMS = [
 
 interface SidebarContentProps {
   onNavigate?: () => void;
-  chatHistory: ChatHistoryItem[];
-  onDeleteChat: (id: string) => void;
-  onRenameChat: (id: string, newTitle: string) => void;
 }
 
-function SidebarContent({
-  onNavigate,
-  chatHistory,
-  onDeleteChat,
-  onRenameChat,
-}: SidebarContentProps) {
+function SidebarContent({ onNavigate }: SidebarContentProps) {
   const pathname = usePathname();
+  const { chatHistory, deleteChat, renameChat } = useChatContext();
+  const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
@@ -53,6 +42,13 @@ function SidebarContent({
       setTriggerRect(triggerRef.current.getBoundingClientRect());
     }
     setSearchOpen(true);
+  };
+
+  const handleDeleteChat = (id: string) => {
+    deleteChat(id);
+    if (pathname === `/chat/${id}`) {
+      router.push("/chat");
+    }
   };
 
   return (
@@ -98,8 +94,8 @@ function SidebarContent({
         <ChatHistory
           items={chatHistory}
           onNavigate={onNavigate}
-          onRename={onRenameChat}
-          onDelete={onDeleteChat}
+          onRename={renameChat}
+          onDelete={handleDeleteChat}
         />
 
         <div className="mt-auto px-4 pb-4">
@@ -126,38 +122,11 @@ function SidebarContent({
 
 export function Sidebar() {
   const { open, setOpen } = useSidebar();
-  const pathname = usePathname();
-  const router = useRouter();
-  const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([
-    ...MOCK_CHAT_HISTORY,
-  ]);
-
-  const handleDeleteChat = useCallback(
-    (id: string) => {
-      setChatHistory((prev) => prev.filter((item) => item.id !== id));
-      // TODO: API 연동 시 실제 삭제 호출
-      if (pathname === `/chat/${id}`) {
-        router.push("/chat");
-      }
-    },
-    [pathname, router]
-  );
-
-  const handleRenameChat = useCallback((id: string, newTitle: string) => {
-    setChatHistory((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, title: newTitle } : c))
-    );
-    // TODO: API 연동 시 실제 이름 변경 호출
-  }, []);
 
   return (
     <>
       <div className="hidden md:flex h-full shrink-0 border-r border-black/10">
-        <SidebarContent
-          chatHistory={chatHistory}
-          onDeleteChat={handleDeleteChat}
-          onRenameChat={handleRenameChat}
-        />
+        <SidebarContent />
       </div>
 
       <AnimatePresence>
@@ -178,12 +147,7 @@ export function Sidebar() {
               exit={{ x: "-100%" }}
               transition={{ type: "spring", duration: 0.35, bounce: 0.1 }}
             >
-              <SidebarContent
-                onNavigate={() => setOpen(false)}
-                chatHistory={chatHistory}
-                onDeleteChat={handleDeleteChat}
-                onRenameChat={handleRenameChat}
-              />
+              <SidebarContent onNavigate={() => setOpen(false)} />
             </motion.div>
           </div>
         )}

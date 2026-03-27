@@ -9,22 +9,22 @@ export default function ChatPage() {
   const router = useRouter();
 
   const handleSend = (message: string) => {
-    // TODO: 실제 채팅 API 연동 후 채팅 생성 → /chat/[id]로 이동
-    console.log("send:", message);
-  };
-
-  const handleSuggestionClick = (text: string) => {
-    handleSend(text);
+    // TODO: 실제 채팅 API 연동 후 새 세션 생성 → /chat/[id]로 이동
+    const newId = `new-${Date.now()}`;
+    router.push(`/chat/${newId}?q=${encodeURIComponent(message)}`);
   };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <ChatHeader />
-      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-4 pt-6">
-        <ChatWelcome onSuggestionClick={handleSuggestionClick} />
-      </div>
-      <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-6 pt-2 md:px-8">
-        <ChatInput onSend={handleSend} />
+      <div className="relative min-h-0 flex-1">
+        <div className="mx-auto flex h-full max-w-3xl flex-col overflow-y-auto px-4 pt-6 pb-24">
+          <ChatWelcome onSuggestionClick={handleSend} />
+        </div>
+        <ChatInput
+          onSend={handleSend}
+          className="absolute inset-x-0 bottom-6 mx-auto w-[calc(100%-2rem)] max-w-184"
+        />
       </div>
     </div>
   );
