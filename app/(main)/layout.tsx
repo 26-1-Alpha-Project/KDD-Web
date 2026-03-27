@@ -20,7 +20,7 @@ export default function MainLayout({
       <ChatProvider>
         <div className="flex h-dvh bg-white">
           <Sidebar />
-          <main className="flex min-w-0 h-dvh flex-1 flex-col">{children}</main>
+          <main className="flex min-w-0 flex-1 flex-col">{children}</main>
         </div>
       </ChatProvider>
     </SidebarContext.Provider>
