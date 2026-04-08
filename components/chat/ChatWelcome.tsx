@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
-import { MOCK_SUGGESTIONS } from "@/constants/mock";
+import { TrendingUp, Sparkles } from "lucide-react";
+import { MOCK_RECOMMENDED_QUESTIONS } from "@/constants/mock-chat";
 
 interface ChatWelcomeProps {
   onSuggestionClick?: (text: string) => void;
@@ -7,32 +10,60 @@ interface ChatWelcomeProps {
 
 export function ChatWelcome({ onSuggestionClick }: ChatWelcomeProps) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4">
-      <Image
-        src="/images/chat-empty-state.png"
-        alt="AI Assistant"
-        width={64}
-        height={64}
-        className="size-16"
-      />
-      <div className="flex flex-col items-center gap-1">
-        <h2 className="text-lg font-semibold text-foreground">
+    <div className="flex flex-1 flex-col items-center justify-center gap-8">
+      {/* Hero */}
+      <div className="text-center">
+        <Image
+          src="/images/chat-empty-state.png"
+          alt="AI Assistant"
+          width={56}
+          height={56}
+          className="mx-auto mb-3 size-14"
+        />
+        <p className="text-xl font-bold text-foreground">
           무엇이든 물어보세요
-        </h2>
-        <p className="text-sm text-[#4a5565]">
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
           국민대학교 학사 규정에 대해 답변해드립니다
         </p>
       </div>
-      <div className="flex max-w-md flex-wrap justify-center gap-2">
-        {MOCK_SUGGESTIONS.map((text) => (
-          <button
-            key={text}
-            onClick={() => onSuggestionClick?.(text)}
-            className="rounded-full border border-[#d9d9d9] px-5 py-2 text-sm font-medium text-[#4a5565] transition-colors hover:border-primary/30 hover:bg-accent"
-          >
-            {text}
-          </button>
-        ))}
+
+      {/* TOP 5 추천 질문 */}
+      <div className="w-full max-w-sm">
+        <div className="mb-2 flex items-center gap-2 px-1">
+          <div className="flex size-4 items-center justify-center rounded bg-primary/10">
+            <TrendingUp className="size-2.5 text-primary" />
+          </div>
+          <span className="text-xs font-semibold text-muted-foreground">
+            TOP 5 추천 질문
+          </span>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {MOCK_RECOMMENDED_QUESTIONS.map((item, i) => (
+            <button
+              key={item.questionId}
+              onClick={() => onSuggestionClick?.(item.content)}
+              className="group flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2 text-left transition-all hover:border-primary/30 hover:bg-accent/50"
+            >
+              <span
+                className={`flex size-5 shrink-0 items-center justify-center rounded text-[10px] font-bold transition-colors ${
+                  i < 3
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+                }`}
+              >
+                {i + 1}
+              </span>
+              <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-foreground">
+                {item.content}
+              </p>
+              <Sparkles
+                size={12}
+                className="shrink-0 text-muted-foreground/30 transition-colors group-hover:text-primary"
+              />
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
