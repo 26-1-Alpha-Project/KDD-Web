@@ -6,15 +6,29 @@ import { cn } from "@/lib/utils";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { ConfidenceBadge } from "./ConfidenceBadge";
 import { SourceCard } from "./SourceCard";
+import { StreamingMessage } from "./StreamingMessage";
+import { SuggestedQuestions } from "./SuggestedQuestions";
 
 interface ChatMessageProps {
   message: ChatMessageType;
+  isStreaming?: boolean;
+  onSelectQuestion?: (question: string) => void;
+  onOpenPDF?: (documentId: string, page: number) => void;
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({
+  message,
+  isStreaming = false,
+  onSelectQuestion,
+  onOpenPDF,
+}: ChatMessageProps) {
   const isUser = message.role === "user";
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const hasSources = !isUser && message.sources && message.sources.length > 0;
+  const hasSuggestedQuestions =
+    !isUser &&
+    message.suggestedQuestions &&
+    message.suggestedQuestions.length > 0;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -42,7 +56,11 @@ export function ChatMessage({ message }: ChatMessageProps) {
               : "bg-secondary text-foreground"
           )}
         >
-          {message.content}
+          {isStreaming && !message.content ? (
+            <StreamingMessage />
+          ) : (
+            message.content
+          )}
         </div>
 
         {hasSources && (
@@ -63,10 +81,23 @@ export function ChatMessage({ message }: ChatMessageProps) {
             {sourcesOpen && (
               <div className="mt-2 flex flex-col gap-2">
                 {message.sources!.map((source, idx) => (
-                  <SourceCard key={`${source.title}-${idx}`} source={source} />
+                  <SourceCard
+                    key={`${source.documentId}-${idx}`}
+                    source={source}
+                    onOpenPDF={onOpenPDF}
+                  />
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {hasSuggestedQuestions && onSelectQuestion && (
+          <div className="mt-3">
+            <SuggestedQuestions
+              questions={message.suggestedQuestions!}
+              onSelect={onSelectQuestion}
+            />
           </div>
         )}
 

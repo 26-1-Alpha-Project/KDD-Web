@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, type KeyboardEvent, type MouseEvent } from "react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
@@ -43,6 +43,14 @@ export function ChatInput({ onSend, disabled, className }: ChatInputProps) {
       onClick={handleContainerClick}
       className={cn("flex cursor-text items-center gap-4 rounded-[28px] border border-border bg-white px-5 py-3 shadow-[0px_2px_12px_0px_rgba(0,0,0,0.08)]", className)}
     >
+      <button
+        type="button"
+        disabled
+        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground/50"
+        aria-label="파일 첨부 (준비 중)"
+      >
+        <Paperclip className="size-5" />
+      </button>
       <textarea
         ref={textareaRef}
         value={value}
@@ -62,7 +70,7 @@ export function ChatInput({ onSend, disabled, className }: ChatInputProps) {
             : "bg-primary/30 text-white"
         )}
       >
-        <ArrowUp className="size-[18px]" />
+        <ArrowUp className="size-5" />
       </button>
     </div>
   );

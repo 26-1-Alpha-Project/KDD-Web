@@ -3,18 +3,18 @@ export type MessageRole = "user" | "assistant";
 export type ConfidenceLevel = "high" | "medium" | "low";
 
 export interface Source {
-  title: string;
-  category: string;
-  page: string;
-  excerpt: string;
+  documentId: string;
+  documentTitle: string;
+  page: number;
 }
 
 export interface ChatMessage {
-  id: string;
+  messageId: string;
   role: MessageRole;
   content: string;
   confidence?: ConfidenceLevel;
   sources?: Source[];
+  suggestedQuestions?: string[];
   createdAt: string;
 }
 

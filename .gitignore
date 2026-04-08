@@ -45,3 +45,9 @@ next-env.d.ts
 
 # claude code
 .claude/settings.local.json
+
+# Notion API 명세 폴더
+ExportBlock
+
+# gstack QA 리포트
+.gstack/
