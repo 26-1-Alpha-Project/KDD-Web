@@ -15,7 +15,7 @@ export function ChatWelcome({ onSuggestionClick }: ChatWelcomeProps) {
       <div className="text-center">
         <Image
           src="/images/chat-empty-state.png"
-          alt="AI Assistant"
+          alt="AI 어시스턴트"
           width={56}
           height={56}
           className="mx-auto mb-3 size-14"
