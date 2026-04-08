@@ -21,6 +21,60 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
 
+  /* FAQ 토픽 색상 토큰 */
+  --color-topic-academic-bg: var(--topic-academic-bg);
+  --color-topic-academic-fg: var(--topic-academic-fg);
+  --color-topic-graduation-bg: var(--topic-graduation-bg);
+  --color-topic-graduation-fg: var(--topic-graduation-fg);
+  --color-topic-leave-bg: var(--topic-leave-bg);
+  --color-topic-leave-fg: var(--topic-leave-fg);
+  --color-topic-scholarship-bg: var(--topic-scholarship-bg);
+  --color-topic-scholarship-fg: var(--topic-scholarship-fg);
+  --color-topic-registration-bg: var(--topic-registration-bg);
+  --color-topic-registration-fg: var(--topic-registration-fg);
+  --color-topic-major-bg: var(--topic-major-bg);
+  --color-topic-major-fg: var(--topic-major-fg);
+  --color-topic-career-bg: var(--topic-career-bg);
+  --color-topic-career-fg: var(--topic-career-fg);
+  --color-topic-event-bg: var(--topic-event-bg);
+  --color-topic-event-fg: var(--topic-event-fg);
+  --color-topic-other-bg: var(--topic-other-bg);
+  --color-topic-other-fg: var(--topic-other-fg);
+
+  /* 토픽 border 토큰 */
+  --color-topic-academic-border: var(--topic-academic-border);
+  --color-topic-graduation-border: var(--topic-graduation-border);
+  --color-topic-leave-border: var(--topic-leave-border);
+  --color-topic-scholarship-border: var(--topic-scholarship-border);
+  --color-topic-registration-border: var(--topic-registration-border);
+  --color-topic-major-border: var(--topic-major-border);
+  --color-topic-career-border: var(--topic-career-border);
+  --color-topic-event-border: var(--topic-event-border);
+  --color-topic-other-border: var(--topic-other-border);
+
+  /* 투표/피드백 토큰 */
+  --color-vote-up-bg: var(--vote-up-bg);
+  --color-vote-up-fg: var(--vote-up-fg);
+  --color-vote-down-bg: var(--vote-down-bg);
+  --color-vote-down-fg: var(--vote-down-fg);
+
+  /* 문서 상태 토큰 */
+  --color-status-uploaded-bg: var(--status-uploaded-bg);
+  --color-status-uploaded-fg: var(--status-uploaded-fg);
+  --color-status-processing-bg: var(--status-processing-bg);
+  --color-status-processing-fg: var(--status-processing-fg);
+  --color-status-completed-bg: var(--status-completed-bg);
+  --color-status-completed-fg: var(--status-completed-fg);
+  --color-status-failed-bg: var(--status-failed-bg);
+  --color-status-failed-fg: var(--status-failed-fg);
+  --color-status-reprocessing-bg: var(--status-reprocessing-bg);
+  --color-status-reprocessing-fg: var(--status-reprocessing-fg);
+
+  /* 인기/강조 토큰 */
+  --color-popular-bg: var(--popular-bg);
+  --color-popular-fg: var(--popular-fg);
+  --color-popular-icon: var(--popular-icon);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -46,6 +100,60 @@
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
   --radius: 0.5rem;
+
+  /* FAQ 토픽 색상 */
+  --topic-academic-bg: #dbeafe;
+  --topic-academic-fg: #1d4ed8;
+  --topic-graduation-bg: #dcfce7;
+  --topic-graduation-fg: #15803d;
+  --topic-leave-bg: #f3e8ff;
+  --topic-leave-fg: #7c3aed;
+  --topic-scholarship-bg: #fef3c7;
+  --topic-scholarship-fg: #b45309;
+  --topic-registration-bg: #cffafe;
+  --topic-registration-fg: #0e7490;
+  --topic-major-bg: #e0e7ff;
+  --topic-major-fg: #4338ca;
+  --topic-career-bg: #ffe4e6;
+  --topic-career-fg: #be123c;
+  --topic-event-bg: #ffedd5;
+  --topic-event-fg: #c2410c;
+  --topic-other-bg: #f3f4f6;
+  --topic-other-fg: #4b5563;
+
+  /* 토픽 border */
+  --topic-academic-border: #bfdbfe;
+  --topic-graduation-border: #86efac;
+  --topic-leave-border: #ddd6fe;
+  --topic-scholarship-border: #fde68a;
+  --topic-registration-border: #fed7aa;
+  --topic-major-border: #c7d2fe;
+  --topic-career-border: #fbcfe8;
+  --topic-event-border: #fed7aa;
+  --topic-other-border: #d1d5db;
+
+  /* 투표/피드백 */
+  --vote-up-bg: #dcfce7;
+  --vote-up-fg: #15803d;
+  --vote-down-bg: #fee2e2;
+  --vote-down-fg: #dc2626;
+
+  /* 문서 상태 */
+  --status-uploaded-bg: #f3f4f6;
+  --status-uploaded-fg: #4b5563;
+  --status-processing-bg: #eff6ff;
+  --status-processing-fg: #1d4ed8;
+  --status-completed-bg: #f0fdf4;
+  --status-completed-fg: #15803d;
+  --status-failed-bg: #fef2f2;
+  --status-failed-fg: #b91c1c;
+  --status-reprocessing-bg: #fffbeb;
+  --status-reprocessing-fg: #b45309;
+
+  /* 인기/강조 */
+  --popular-bg: #fffbeb;
+  --popular-fg: #92400e;
+  --popular-icon: #f59e0b;
 }
 
 body {

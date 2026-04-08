@@ -11,6 +11,7 @@ import {
   CircleHelp,
   Settings,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "./SidebarContext";
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/chat", label: "새 채팅", icon: SquarePen },
   { href: "/resources", label: "자료", icon: FileText },
   { href: "/faq", label: "FAQ", icon: CircleHelp },
+  { href: "/admin", label: "관리자", icon: ShieldCheck },
   { href: "/settings", label: "설정", icon: Settings },
 ] as const;
 
