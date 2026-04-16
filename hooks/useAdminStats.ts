@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MOCK_ADMIN_STATISTICS } from "@/constants/mock-admin";
+import { getStatistics } from "@/lib/api/services/admin.service";
 import type { AdminStatistics } from "@/types/api/admin";
 
 export function useAdminStats() {
@@ -9,13 +9,10 @@ export function useAdminStats() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: 실제 API 연동 시 교체
-    const timer = setTimeout(() => {
-      setStatistics(MOCK_ADMIN_STATISTICS);
-      setIsLoading(false);
-    }, 0);
-
-    return () => clearTimeout(timer);
+    getStatistics()
+      .then((res) => setStatistics(res))
+      .catch(() => setStatistics(null))
+      .finally(() => setIsLoading(false));
   }, []);
 
   return { statistics, isLoading };

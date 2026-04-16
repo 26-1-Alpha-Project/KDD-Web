@@ -1,0 +1,134 @@
+import { apiClient } from '@/lib/api/client';
+import { delay } from '@/lib/api/mock';
+import type {
+  CategoryTreeListResponse,
+  DocumentListRequest,
+  DocumentListPageResponse,
+  DocumentDetailResponse,
+  PopularDocumentsResponse,
+  DocumentByCategoryPageResponse,
+} from '@/types/api/document';
+
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
+
+const MOCK_CATEGORY_TREE: CategoryTreeListResponse = {
+  categories: [
+    {
+      categoryId: 1,
+      name: '학사규정',
+      children: [
+        { categoryId: 11, name: '수강신청', children: [] },
+        { categoryId: 12, name: '휴학·복학', children: [] },
+        { categoryId: 13, name: '졸업', children: [] },
+      ],
+    },
+    {
+      categoryId: 2,
+      name: '장학',
+      children: [
+        { categoryId: 21, name: '교내장학', children: [] },
+        { categoryId: 22, name: '국가장학', children: [] },
+      ],
+    },
+    {
+      categoryId: 3,
+      name: '공지사항',
+      children: [
+        { categoryId: 31, name: '학사공지', children: [] },
+        { categoryId: 32, name: '취업·현장실습', children: [] },
+      ],
+    },
+  ],
+};
+
+const MOCK_DOCUMENTS: DocumentListPageResponse = {
+  data: [
+    { documentId: 1, title: '2026학년도 학사일정', category: '학사공지', updatedAt: '2026-03-01' },
+    { documentId: 2, title: '수강신청 안내', category: '수강신청', updatedAt: '2026-02-15' },
+    { documentId: 3, title: '장학금 신청 안내', category: '교내장학', updatedAt: '2026-02-10' },
+  ],
+  totalCount: 3,
+  page: 0,
+  pageSize: 20,
+  totalPages: 1,
+};
+
+const MOCK_POPULAR: PopularDocumentsResponse = {
+  documents: [
+    { documentId: 1, title: '2026학년도 학사일정', category: '학사공지', viewCount: 1523, updatedAt: '2026-03-01' },
+    { documentId: 2, title: '수강신청 안내', category: '수강신청', viewCount: 987, updatedAt: '2026-02-15' },
+  ],
+};
+
+export async function getCategoryTree(): Promise<CategoryTreeListResponse> {
+  if (USE_MOCK) {
+    await delay(300);
+    return MOCK_CATEGORY_TREE;
+  }
+  return apiClient.get<CategoryTreeListResponse>('/documents/categories');
+}
+
+export async function getDocuments(params?: DocumentListRequest): Promise<DocumentListPageResponse> {
+  if (USE_MOCK) {
+    await delay(400);
+    return MOCK_DOCUMENTS;
+  }
+  return apiClient.get<DocumentListPageResponse>('/documents', {
+    params: {
+      categoryId: params?.categoryId,
+      keyword: params?.keyword,
+      sort: params?.sort,
+      page: params?.page,
+      pageSize: params?.pageSize,
+    },
+  });
+}
+
+export async function getDocumentDetail(fileId: number): Promise<DocumentDetailResponse> {
+  if (USE_MOCK) {
+    await delay(300);
+    return {
+      id: fileId,
+      title: '문서 상세',
+      categoryId: 1,
+      categoryName: '학사규정',
+      status: 'completed',
+      source: 'SW',
+      originalFilename: 'document.pdf',
+      fileSize: 102400,
+      createdAt: '2026-01-01',
+    };
+  }
+  return apiClient.get<DocumentDetailResponse>(`/documents/${fileId}`);
+}
+
+export async function getPopularDocuments(): Promise<PopularDocumentsResponse> {
+  if (USE_MOCK) {
+    await delay(300);
+    return MOCK_POPULAR;
+  }
+  return apiClient.get<PopularDocumentsResponse>('/documents/popular');
+}
+
+export async function getDocumentsByCategory(
+  categoryId: number,
+  params?: Omit<DocumentListRequest, 'categoryId' | 'keyword' | 'sort'>
+): Promise<DocumentByCategoryPageResponse> {
+  if (USE_MOCK) {
+    await delay(300);
+    return {
+      data: [],
+      totalCount: 0,
+      page: 0,
+      pageSize: 20,
+      totalPages: 0,
+    };
+  }
+  return apiClient.get<DocumentByCategoryPageResponse>('/documents/by-category', {
+    params: {
+      categoryId,
+      page: params?.page,
+      pageSize: params?.pageSize,
+    },
+  });
+}
