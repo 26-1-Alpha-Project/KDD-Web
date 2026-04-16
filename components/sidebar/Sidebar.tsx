@@ -18,13 +18,14 @@ import { useSidebar } from "./SidebarContext";
 import { ChatHistory } from "./ChatHistory";
 import { SearchModal } from "./SearchModal";
 import { useChatContext } from "@/components/chat/ChatContext";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const NAV_ITEMS = [
-  { href: "/chat", label: "새 채팅", icon: SquarePen },
-  { href: "/resources", label: "자료", icon: FileText },
-  { href: "/faq", label: "FAQ", icon: CircleHelp },
-  { href: "/admin", label: "관리자", icon: ShieldCheck },
-  { href: "/settings", label: "설정", icon: Settings },
+  { href: "/chat", label: "새 채팅", icon: SquarePen, adminOnly: false },
+  { href: "/resources", label: "자료", icon: FileText, adminOnly: false },
+  { href: "/faq", label: "FAQ", icon: CircleHelp, adminOnly: false },
+  { href: "/admin", label: "관리자", icon: ShieldCheck, adminOnly: true },
+  { href: "/settings", label: "설정", icon: Settings, adminOnly: false },
 ] as const;
 
 interface SidebarContentProps {
@@ -34,6 +35,8 @@ interface SidebarContentProps {
 function SidebarContent({ onNavigate }: SidebarContentProps) {
   const pathname = usePathname();
   const { chatHistory, deleteChat, renameChat } = useChatContext();
+  const { logout, user } = useAuth();
+  const isAdmin = user?.role === "ROLE_ADMIN";
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -69,28 +72,30 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
         </div>
 
         <nav className="flex flex-col gap-0.5 px-3 pt-2">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-            const isActive =
-              href === "/chat"
-                ? pathname === "/chat"
-                : pathname.startsWith(href);
+          {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map(
+            ({ href, label, icon: Icon }) => {
+              const isActive =
+                href === "/chat"
+                  ? pathname === "/chat"
+                  : pathname.startsWith(href);
 
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={onNavigate}
-                className={cn(
-                  "flex h-[37px] items-center gap-3 rounded-[10px] px-3 text-sm font-medium text-foreground transition-colors",
-                  "hover:bg-secondary",
-                  isActive && href !== "/chat" && "bg-secondary"
-                )}
-              >
-                <Icon className="size-4" />
-                {label}
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex h-[37px] items-center gap-3 rounded-[10px] px-3 text-sm font-medium text-foreground transition-colors",
+                    "hover:bg-secondary",
+                    isActive && href !== "/chat" && "bg-secondary"
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {label}
+                </Link>
+              );
+            }
+          )}
         </nav>
 
         <ChatHistory
@@ -101,7 +106,10 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
         />
 
         <div className="mt-auto px-4 pb-4">
-          <button className="flex h-9 w-full items-center justify-center gap-2 rounded-[10px] border border-black/10 text-xs font-medium text-foreground transition-colors hover:bg-secondary">
+          <button
+            onClick={logout}
+            className="flex h-9 w-full items-center justify-center gap-2 rounded-[10px] border border-black/10 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
+          >
             <LogOut className="size-3.5" />
             로그아웃
           </button>

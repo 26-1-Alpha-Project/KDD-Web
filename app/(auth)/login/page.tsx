@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { FcGoogle } from "react-icons/fc";
-import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProfileForm } from "@/hooks/useProfileForm";
 import StepIndicator from "@/components/profile/StepIndicator";
@@ -12,6 +11,23 @@ import ButtonPair from "@/components/profile/ButtonPair";
 import BasicInfoStep from "@/components/profile/BasicInfoStep";
 import StudentInfoStep from "@/components/profile/StudentInfoStep";
 import StaffInfoStep from "@/components/profile/StaffInfoStep";
+import { authManager } from "@/lib/api/auth";
+import { googleLogin } from "@/lib/api/services/auth.service";
+import { getMyInfo, createProfile } from "@/lib/api/services/user.service";
+import { ApiError, ERROR_MESSAGES } from "@/lib/api/errors";
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
+const GOOGLE_REDIRECT_URI =
+  process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI ??
+  "http://localhost:3000/auth/callback";
+
+const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7일
+
+function setAuthCookies(role: string | null, profileCompleted: boolean): void {
+  const roleValue = role ?? "";
+  document.cookie = `user_role=${roleValue}; path=/; max-age=${AUTH_COOKIE_MAX_AGE}; samesite=strict`;
+  document.cookie = `profile_completed=${profileCompleted}; path=/; max-age=${AUTH_COOKIE_MAX_AGE}; samesite=strict`;
+}
 
 const slides = [
   {
@@ -31,12 +47,16 @@ const slides = [
   },
 ];
 
-import { MOCK_GOOGLE_USER } from "@/constants/mock";
-
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
-  const [phase, setPhase] = useState<"carousel" | "profile">("carousel");
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const searchParams = useSearchParams();
+  const stepParam = searchParams.get("step");
+
+  const [phase, setPhase] = useState<"carousel" | "profile">(
+    stepParam === "profile" ? "profile" : "carousel"
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
 
   const {
@@ -55,7 +75,7 @@ export default function LoginPage() {
     validateStep2,
     goNext,
     goBack,
-  } = useProfileForm(MOCK_GOOGLE_USER.name, MOCK_GOOGLE_USER.email);
+  } = useProfileForm();
 
   useEffect(() => {
     if (phase !== "carousel") return;
@@ -65,14 +85,63 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [phase]);
 
+  // 팝업에서 postMessage로 전달되는 OAuth code 수신
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "GOOGLE_OAUTH_CODE") return;
+
+      const code = event.data.code as string;
+      if (!code) return;
+
+      try {
+        setLoginError(null);
+        const response = await googleLogin(code);
+        authManager.setToken(response.accessToken);
+        const me = await getMyInfo();
+        setAuthCookies(me.role, me.profileCompleted);
+
+        if (!response.isProfileCompleted) {
+          setPhase("profile");
+        } else {
+          router.replace("/chat");
+        }
+      } catch (error) {
+        if (error instanceof ApiError) {
+          setLoginError(
+            ERROR_MESSAGES[error.code] ?? error.message
+          );
+        } else {
+          setLoginError("로그인 중 오류가 발생했습니다.");
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [router]);
+
   const handleGoogleLogin = () => {
-    if (isLoggingIn) return;
-    // TODO: Integrate real Google OAuth
-    setIsLoggingIn(true);
-    setTimeout(() => {
-      setIsLoggingIn(false);
+    if (!GOOGLE_CLIENT_ID) {
+      // mock 모드: 직접 프로필 단계로 이동
       setPhase("profile");
-    }, 1000);
+      return;
+    }
+
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: GOOGLE_REDIRECT_URI,
+      response_type: "code",
+      scope: "email profile",
+    });
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+
+    const popup = window.open(authUrl, "_blank", "popup,width=500,height=600");
+
+    if (!popup) {
+      // 팝업 차단된 경우: 전체 페이지 리다이렉트로 fallback
+      window.location.href = authUrl;
+    }
   };
 
   const handleProfileBack = () => {
@@ -83,15 +152,56 @@ export default function LoginPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateStep2()) return;
-    // TODO: Submit profile data to API
-    router.push("/chat");
+    setIsSubmitting(true);
+    setLoginError(null);
+    try {
+      const profileData = buildProfileData();
+      await createProfile(profileData);
+      setAuthCookies(null, true);
+      router.push("/chat");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setLoginError(ERROR_MESSAGES[error.code] ?? error.message);
+      } else {
+        setLoginError("프로필 저장 중 오류가 발생했습니다.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const buildProfileData = () => {
+    const base = {
+      name: basicInfo.name,
+      userType: basicInfo.userType,
+    };
+
+    if (basicInfo.userType === "student") {
+      return {
+        ...base,
+        studentId: basicInfo.studentId,
+        department: studentInfo.department,
+        grade: studentInfo.grade ? Number(studentInfo.grade) : undefined,
+        admissionYear: studentInfo.admissionYear
+          ? Number(studentInfo.admissionYear)
+          : undefined,
+        academicStatus:
+          studentInfo.leaveOfAbsence === "yes" ? "on_leave" : "enrolled",
+        additionalInfo: studentInfo.additionalInfo || undefined,
+      };
+    }
+
+    return {
+      ...base,
+      staffDepartment: staffInfo.staffDepartment,
+      jobDescription: staffInfo.jobDescription || undefined,
+    };
   };
 
   /* ─── Carousel phase ─── */
   if (phase === "carousel") {
-    const slide = slides[current];
     return (
       <div className="min-h-dvh bg-background">
         <div className="flex flex-col items-center justify-between mx-auto max-w-100 min-h-dvh px-5 py-8">
@@ -101,20 +211,27 @@ export default function LoginPage() {
           {/* Slide content */}
           <div className="flex flex-1 items-center justify-center w-full">
             <div className="flex flex-col items-center gap-8">
+              {/* 모든 이미지를 한 번에 렌더링 — CSS로 현재 슬라이드만 표시 */}
               <div className="relative w-56 h-56 shrink-0">
-                <Image
-                  src={slide.image}
-                  alt={slide.title}
-                  fill
-                  sizes="224px"
-                  className="object-contain"
-                />
+                {slides.map((slide, i) => (
+                  <Image
+                    key={slide.image}
+                    src={slide.image}
+                    alt={slide.title}
+                    fill
+                    sizes="224px"
+                    priority={i === 0}
+                    className={`object-contain transition-opacity duration-500 ${
+                      i === current ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                ))}
               </div>
               <p className="text-2xl font-bold text-foreground text-center leading-8">
-                {slide.title}
+                {slides[current].title}
               </p>
               <p className="text-base text-muted-foreground text-center leading-6 max-w-64">
-                {slide.description}
+                {slides[current].description}
               </p>
             </div>
           </div>
@@ -126,7 +243,7 @@ export default function LoginPage() {
               {slides.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => !isLoggingIn && setCurrent(i)}
+                  onClick={() => setCurrent(i)}
                   aria-label={`슬라이드 ${i + 1}`}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     i === current ? "w-8 bg-primary" : "w-2 bg-border"
@@ -140,23 +257,16 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 onClick={handleGoogleLogin}
-                disabled={isLoggingIn}
-                className={`w-full h-12 rounded-2xl text-[15px] font-medium ${
-                  isLoggingIn ? "opacity-70" : ""
-                }`}
+                className="w-full h-12 rounded-2xl text-[15px] font-medium"
               >
-                {isLoggingIn ? (
-                  <>
-                    <Loader2 className="size-5 animate-spin text-muted-foreground" />
-                    로그인 중...
-                  </>
-                ) : (
-                  <>
-                    <FcGoogle className="size-5" />
-                    Google로 계속하기
-                  </>
-                )}
+                <FcGoogle className="size-5" />
+                Google로 계속하기
               </Button>
+              {loginError && (
+                <p className="text-xs text-destructive text-center">
+                  {loginError}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground text-center">
                 국민대학교 계정(@kookmin.ac.kr)으로 로그인하세요
               </p>
@@ -201,6 +311,13 @@ export default function LoginPage() {
           )}
         </div>
 
+        {/* Error message */}
+        {loginError && (
+          <p className="text-xs text-destructive text-center shrink-0">
+            {loginError}
+          </p>
+        )}
+
         {/* Bottom buttons */}
         <div className="shrink-0 pt-4">
           {step === 1 && (
@@ -214,12 +331,24 @@ export default function LoginPage() {
             <ButtonPair
               onBack={handleProfileBack}
               onNext={handleSubmit}
-              nextLabel="시작하기"
-              nextDisabled={!isStep2Filled}
+              nextLabel={isSubmitting ? "저장 중..." : "시작하기"}
+              nextDisabled={!isStep2Filled || isSubmitting}
             />
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-dvh items-center justify-center bg-background" />
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }
