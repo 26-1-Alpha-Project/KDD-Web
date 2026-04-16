@@ -2,12 +2,13 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MessageSquare, FileText, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { SidebarContext } from "@/components/sidebar/SidebarContext";
 import { ChatProvider } from "@/components/chat/ChatContext";
+import { AuthProvider, useAuth } from "@/components/providers/AuthProvider";
 import type { LucideIcon } from "lucide-react";
 
 const ADMIN_TABS: readonly { href: string; label: string; icon: LucideIcon }[] =
@@ -16,6 +17,18 @@ const ADMIN_TABS: readonly { href: string; label: string; icon: LucideIcon }[] =
     { href: "/admin/documents", label: "문서 관리", icon: FileText },
     { href: "/admin/faq", label: "FAQ 관리", icon: CheckSquare },
   ];
+
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  if (!isLoading && user?.role !== "ROLE_ADMIN") {
+    router.replace("/chat");
+    return null;
+  }
+
+  return <>{children}</>;
+}
 
 export default function AdminLayout({
   children,
@@ -26,6 +39,8 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
+    <AuthProvider>
+      <AdminGuard>
     <SidebarContext.Provider
       value={{ open: sidebarOpen, setOpen: setSidebarOpen }}
     >
@@ -76,5 +91,7 @@ export default function AdminLayout({
         </div>
       </ChatProvider>
     </SidebarContext.Provider>
+      </AdminGuard>
+    </AuthProvider>
   );
 }
