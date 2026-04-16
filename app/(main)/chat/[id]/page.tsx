@@ -10,9 +10,9 @@ import { FallbackMessage } from "@/components/chat/FallbackMessage";
 import { PDFViewer } from "@/components/shared/PDFViewer";
 import { useChatContext } from "@/components/chat/ChatContext";
 import { useSSEStream } from "@/hooks/useSSEStream";
-import { MOCK_CHAT_SESSIONS } from "@/constants/mock";
+import { getSessionDetail } from "@/lib/api/services/chat.service";
 import type { ChatMessage } from "@/types/chat";
-import type { SSEEvent } from "@/types/api/chat";
+import type { SSEEvent, ChatMessageResponse } from "@/types/api/chat";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -23,9 +23,7 @@ interface PDFViewerState {
   initialPage?: number;
 }
 
-function buildMessagesFromEvents(
-  events: SSEEvent[]
-): Partial<ChatMessage> {
+function buildMessagesFromEvents(events: SSEEvent[]): Partial<ChatMessage> {
   let content = "";
   let confidence: ChatMessage["confidence"] | undefined;
   let sources: ChatMessage["sources"] | undefined;
@@ -51,14 +49,27 @@ function buildMessagesFromEvents(
   return { content, confidence, sources, suggestedQuestions };
 }
 
+function mapApiMessageToLocal(msg: ChatMessageResponse): ChatMessage {
+  return {
+    messageId: String(msg.messageId),
+    role: msg.role,
+    content: msg.content,
+    confidence: (msg.confidence as ChatMessage["confidence"]) ?? undefined,
+    sources: msg.sources.map((s) => ({
+      documentId: s.documentId,
+      documentTitle: s.documentTitle,
+      page: s.page,
+    })),
+    createdAt: msg.createdAt,
+  };
+}
+
 export default function ChatDetailPage({ params }: Props) {
   const { id } = use(params);
   const searchParams = useSearchParams();
-  const { addChat } = useChatContext();
-  const session = MOCK_CHAT_SESSIONS[id];
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    session?.messages ?? []
-  );
+  const { renameChat } = useChatContext();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const initialQueryHandled = useRef(false);
 
   const [pdfViewer, setPdfViewer] = useState<PDFViewerState>({
@@ -70,11 +81,30 @@ export default function ChatDetailPage({ params }: Props) {
 
   const { events, isStreaming, sendMessage, reset } = useSSEStream(id);
 
+  // 세션 상세 로드 (히스토리 메시지)
+  useEffect(() => {
+    const numericId = Number(id);
+    if (isNaN(numericId)) {
+      setSessionLoaded(true);
+      return;
+    }
+    getSessionDetail(numericId)
+      .then((res) => {
+        if (res.messages.length > 0) {
+          setMessages(res.messages.map(mapApiMessageToLocal));
+        }
+      })
+      .catch(() => {
+        // 세션 로드 실패 시 빈 메시지로 시작
+      })
+      .finally(() => setSessionLoaded(true));
+  }, [id]);
+
   // SSE 이벤트로부터 fallback/error 이벤트 추출
   const fallbackEvent = events.find((e) => e.type === "fallback");
   const errorEvent = events.find((e) => e.type === "error");
 
-  // 스트리밍 완료 시 메시지 목록에 추가
+  // 스트리밍 완료 시 메시지 목록에 추가 + 서버 제목 동기화
   useEffect(() => {
     const doneEvent = events.find((e) => e.type === "done");
     if (!doneEvent || isStreaming) return;
@@ -82,7 +112,6 @@ export default function ChatDetailPage({ params }: Props) {
     const partial = buildMessagesFromEvents(events);
 
     if (fallbackEvent) {
-      // fallback은 별도 UI로 처리 — 메시지로 추가하지 않음
       return;
     }
 
@@ -98,6 +127,14 @@ export default function ChatDetailPage({ params }: Props) {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       reset();
+
+      // 백엔드가 생성한 세션 제목으로 사이드바 동기화
+      const numericId = Number(id);
+      if (!isNaN(numericId)) {
+        getSessionDetail(numericId)
+          .then((res) => renameChat(id, res.title))
+          .catch(() => {});
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStreaming]);
@@ -105,7 +142,6 @@ export default function ChatDetailPage({ params }: Props) {
   const handleSend = (content: string) => {
     const trimmed = content.trim();
     if (!trimmed) return;
-    const isFirstMessage = messages.length === 0;
 
     const userMessage: ChatMessage = {
       messageId: `${id}-${Date.now()}`,
@@ -114,17 +150,10 @@ export default function ChatDetailPage({ params }: Props) {
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMessage]);
-
-    if (isFirstMessage) {
-      const title =
-        trimmed.length > 20 ? trimmed.slice(0, 20) + "..." : trimmed;
-      addChat(id, title);
-    }
-
     sendMessage(trimmed);
   };
 
-  const handleOpenPDF = (documentId: string, page: number) => {
+  const handleOpenPDF = (documentId: number, page: number) => {
     setPdfViewer({
       open: true,
       fileUrl: `/api/documents/${documentId}`,
@@ -138,6 +167,7 @@ export default function ChatDetailPage({ params }: Props) {
   };
 
   useEffect(() => {
+    if (!sessionLoaded) return;
     if (initialQueryHandled.current) return;
     const q = searchParams.get("q");
     if (q && messages.length === 0) {
@@ -145,7 +175,7 @@ export default function ChatDetailPage({ params }: Props) {
       handleSend(q);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sessionLoaded]);
 
   const isEmpty = messages.length === 0 && !isStreaming;
 

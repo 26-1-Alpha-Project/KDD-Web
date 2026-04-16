@@ -3,7 +3,7 @@ export type MessageRole = "user" | "assistant";
 export type ConfidenceLevel = "high" | "medium" | "low";
 
 export interface Source {
-  documentId: string;
+  documentId: number;
   documentTitle: string;
   page: number;
 }

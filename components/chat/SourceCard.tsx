@@ -4,7 +4,7 @@ import type { Source } from "@/types/chat";
 
 interface SourceCardProps {
   source: Source;
-  onOpenPDF?: (documentId: string, page: number) => void;
+  onOpenPDF?: (documentId: number, page: number) => void;
 }
 
 export function SourceCard({ source, onOpenPDF }: SourceCardProps) {

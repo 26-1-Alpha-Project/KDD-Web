@@ -99,10 +99,8 @@ export function StatsTab() {
     0
   );
 
-  const studentEntry = users.byUserType.find((u) => u.type === "학생");
-  const staffEntry = users.byUserType.find((u) => u.type === "교직원");
-  const studentCount = studentEntry?.count ?? 0;
-  const staffCount = staffEntry?.count ?? 0;
+  const studentCount = users.byUserType.student ?? 0;
+  const staffCount = users.byUserType.staff ?? 0;
   const totalUsers = studentCount + staffCount;
   const studentPct =
     totalUsers > 0
@@ -268,10 +266,7 @@ export function StatsTab() {
                 },
               ] as const
             ).map(({ key, icon: Icon, color, bgColor }) => {
-              const entry = users.byUserType.find(
-                (u) => u.type === key
-              );
-              const count = entry?.count ?? 0;
+              const count = key === "학생" ? studentCount : staffCount;
               const pct =
                 totalUsers > 0
                   ? ((count / totalUsers) * 100).toFixed(1)

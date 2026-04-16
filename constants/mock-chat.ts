@@ -29,12 +29,12 @@ export const MOCK_CHAT_SESSIONS: Record<string, ChatSession> = {
         confidence: "high",
         sources: [
           {
-            documentId: "doc-001",
+            documentId: 1,
             documentTitle: "학칙 제35조 (휴학)",
             page: 12,
           },
           {
-            documentId: "doc-002",
+            documentId: 2,
             documentTitle: "2026학년도 학사일정 — 휴학 신청 기간",
             page: 3,
           },
@@ -55,7 +55,7 @@ export const MOCK_CHAT_SESSIONS: Record<string, ChatSession> = {
         confidence: "high",
         sources: [
           {
-            documentId: "doc-001",
+            documentId: 1,
             documentTitle: "학칙 제35조 (휴학)",
             page: 12,
           },
@@ -142,7 +142,7 @@ export const MOCK_CHAT_SESSIONS: Record<string, ChatSession> = {
         confidence: "high",
         sources: [
           {
-            documentId: "doc-003",
+            documentId: 3,
             documentTitle: "학칙 제29조 (학점 인정)",
             page: 8,
           },
@@ -183,7 +183,7 @@ export const MOCK_CHAT_SESSIONS: Record<string, ChatSession> = {
         confidence: "high",
         sources: [
           {
-            documentId: "doc-004",
+            documentId: 4,
             documentTitle: "학칙 제24조 (복수전공)",
             page: 10,
           },
@@ -233,17 +233,22 @@ export const MOCK_SSE_SEQUENCE_HIGH: SSEEvent[] = [
     type: "meta",
     subtype: "document",
     confidence: "high",
-    similarityScore: 0.92,
     sources: [
       {
-        documentId: "doc-001",
+        documentId: 1,
         documentTitle: "학칙 제35조 (휴학)",
         page: 12,
       },
     ],
   } satisfies SSEMetaEvent,
-  { type: "text", content: "이번 학기 휴학 신청 기간은 " } satisfies SSETextEvent,
-  { type: "text", content: "3월 3일부터 3월 14일까지입니다." } satisfies SSETextEvent,
+  {
+    type: "text",
+    content: "이번 학기 휴학 신청 기간은 ",
+  } satisfies SSETextEvent,
+  {
+    type: "text",
+    content: "3월 3일부터 3월 14일까지입니다.",
+  } satisfies SSETextEvent,
   {
     type: "text",
     content: "\n\n일반 휴학의 경우 학기당 1회, ",
@@ -256,7 +261,7 @@ export const MOCK_SSE_SEQUENCE_HIGH: SSEEvent[] = [
     type: "text",
     content: "\n\n휴학 신청은 KLAS에서 온라인으로 하시면 됩니다.",
   } satisfies SSETextEvent,
-  { type: "done", messageId: "msg-high-001" } satisfies SSEDoneEvent,
+  { type: "done", messageId: 1001 } satisfies SSEDoneEvent,
 ];
 
 export const MOCK_SSE_SEQUENCE_LOW: SSEEvent[] = [
@@ -264,7 +269,6 @@ export const MOCK_SSE_SEQUENCE_LOW: SSEEvent[] = [
     type: "meta",
     subtype: "document",
     confidence: "low",
-    similarityScore: 0.45,
     sources: [],
   } satisfies SSEMetaEvent,
   {
@@ -279,7 +283,7 @@ export const MOCK_SSE_SEQUENCE_LOW: SSEEvent[] = [
     type: "text",
     content: "\n\n담당자 연락처는 학교 홈페이지에서 확인하실 수 있습니다.",
   } satisfies SSETextEvent,
-  { type: "done", messageId: "msg-low-001" } satisfies SSEDoneEvent,
+  { type: "done", messageId: 1002 } satisfies SSEDoneEvent,
 ];
 
 export const MOCK_SSE_FALLBACK: SSEFallbackEvent = {

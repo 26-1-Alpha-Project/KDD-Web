@@ -388,11 +388,6 @@ export function DocsTab() {
                         {doc.title}
                       </p>
                     </div>
-                    {doc.size && (
-                      <p className="ml-5 mt-0.5 text-[11px] text-muted-foreground">
-                        {doc.size}
-                      </p>
-                    )}
                   </div>
 
                   {/* 카테고리 */}

@@ -2,13 +2,16 @@
 
 import Image from "next/image";
 import { TrendingUp, Sparkles } from "lucide-react";
-import { MOCK_RECOMMENDED_QUESTIONS } from "@/constants/mock-chat";
+import type { RecommendedQuestion } from "@/types/api/chat";
 
 interface ChatWelcomeProps {
   onSuggestionClick?: (text: string) => void;
+  recommendations?: RecommendedQuestion[];
 }
 
-export function ChatWelcome({ onSuggestionClick }: ChatWelcomeProps) {
+export function ChatWelcome({ onSuggestionClick, recommendations }: ChatWelcomeProps) {
+  const questions = recommendations ?? [];
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-8">
       {/* Hero */}
@@ -28,7 +31,8 @@ export function ChatWelcome({ onSuggestionClick }: ChatWelcomeProps) {
         </p>
       </div>
 
-      {/* TOP 5 추천 질문 */}
+      {/* TOP 5 추천 질문 — 데이터가 없으면 숨김 */}
+      {questions.length > 0 && (
       <div className="w-full max-w-sm">
         <div className="mb-2 flex items-center gap-2 px-1">
           <div className="flex size-4 items-center justify-center rounded bg-primary/10">
@@ -39,7 +43,7 @@ export function ChatWelcome({ onSuggestionClick }: ChatWelcomeProps) {
           </span>
         </div>
         <div className="flex flex-col gap-1.5">
-          {MOCK_RECOMMENDED_QUESTIONS.map((item, i) => (
+          {questions.map((item, i) => (
             <button
               key={item.questionId}
               onClick={() => onSuggestionClick?.(item.content)}
@@ -65,6 +69,7 @@ export function ChatWelcome({ onSuggestionClick }: ChatWelcomeProps) {
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 }
