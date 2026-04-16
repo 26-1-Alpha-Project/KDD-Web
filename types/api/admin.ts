@@ -1,7 +1,6 @@
 export interface AdminDocument {
   id: number;
   title: string;
-  size?: string;
   categoryId: number;
   categoryName: string;
   status: "uploaded" | "processing" | "completed" | "failed" | "reprocessing";
@@ -12,9 +11,9 @@ export interface AdminDocument {
 export interface AdminStatistics {
   users: {
     totalUsers: number;
-    byUserType: { type: string; count: number }[];
-    byDepartment: { department: string; count: number }[];
-    byGrade: { grade: string; count: number }[];
+    byUserType: { student: number; staff: number };
+    byDepartment: Record<string, number>;
+    byGrade: Record<string, number>;
   };
   overview: {
     totalQuestions: number;
@@ -40,4 +39,50 @@ export interface FAQCandidate {
   status?: "pending" | "approved" | "rejected" | "registered";
   /** 프론트 전용 — API 응답에 없음 */
   source?: string;
+}
+
+/** 관리자 문서 목록 요청 파라미터 */
+export interface AdminDocumentListRequest {
+  page?: number;
+  pageSize?: number;
+}
+
+/** 관리자 문서 목록 응답 */
+export interface AdminDocumentListPageResponse {
+  data: AdminDocument[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/** 관리자 통계 응답 */
+export type AdminStatisticsResponse = AdminStatistics;
+
+/** FAQ 후보 목록 요청 파라미터 */
+export interface FAQCandidateListRequest {
+  page?: number;
+  pageSize?: number;
+}
+
+/** FAQ 후보 목록 응답 */
+export interface FAQCandidateListResponse {
+  data: FAQCandidate[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/** 문서 응답 (업로드 후 반환) */
+export interface DocumentResponse {
+  id: number;
+  title: string;
+  categoryId: number;
+  categoryName: string;
+  status: string;
+  source: string;
+  originalFilename: string;
+  fileSize: number;
+  createdAt: string;
 }
