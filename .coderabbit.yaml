@@ -12,7 +12,9 @@ reviews:
     # 리뷰 제외 경로
     - "!**/*.md"
     - "!docs/**"
-    - "!.claude/**"
+    - "!.claude/rules/**"
+    - "!.claude/skills/**"
+    - "!.claude/settings/**"
     - "!constants/mock-*.ts"
     - "!package-lock.json"
     - "!.gitignore"
