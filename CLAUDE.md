@@ -36,6 +36,22 @@ types/            TypeScript 타입 정의
 
 경로 별칭: `@/*` = 프로젝트 루트
 
+## API 연동
+
+- **백엔드**: Spring Boot (`d:\GIthub\kdd-api`, localhost:8000)
+- **AI 서버**: FastAPI (`d:\GIthub\kdd-ai`, 43.201.194.211:8000)
+- **프록시**: `next.config.ts` rewrites — `/api/backend/*` → `localhost:8000/*`
+- **API 클라이언트**: `lib/api/client.ts` (baseUrl: `/api/backend`)
+- **인증**: JWT Access Token (메모리) + Refresh Token (HttpOnly Cookie, Path=/auth)
+- **Mock 모드**: `NEXT_PUBLIC_USE_MOCK=true`면 mock 반환, `false`면 실제 API
+- **API 명세서**: `.claude/docs/api-*.md` (도메인별 상세 명세서)
+  - `api-overview.md` — 전체 구조, 구현 상태 요약
+  - `api-auth.md` — 인증 (로그인, 토큰 재발급, 로그아웃)
+  - `api-users.md` — 사용자 (내 정보, 프로필)
+  - `api-chat.md` — 채팅 (세션 CRUD, SSE 스트리밍)
+  - `api-documents.md` — 문서 (카테고리, 목록, 상세, 관리자)
+  - `api-faq.md` — FAQ (후순위)
+
 ## 핵심 규칙
 
 - 함수 컴포넌트 + named export (페이지만 default export)

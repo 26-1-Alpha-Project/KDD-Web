@@ -25,8 +25,8 @@ export const MOCK_FAQ_ITEMS: FAQItem[] = [
     createdAt: "2026-04-08T09:05:00Z",
     helpful: 57, notHelpful: 3, isNew: true,
     sources: [
-      { documentId: "4", documentTitle: "2026-1학기 SW학부 성적우수 장학금 안내", page: 2 },
-      { documentId: "7", documentTitle: "SW중심대학 장학금 신청 안내", page: 1 },
+      { documentId: 4, documentTitle: "2026-1학기 SW학부 성적우수 장학금 안내", page: 2 },
+      { documentId: 7, documentTitle: "SW중심대학 장학금 신청 안내", page: 1 },
     ] satisfies Source[],
   },
   {
@@ -37,8 +37,8 @@ export const MOCK_FAQ_ITEMS: FAQItem[] = [
     createdAt: "2026-04-08T08:12:00Z",
     helpful: 42, notHelpful: 2, isNew: true,
     sources: [
-      { documentId: "12", documentTitle: "국민대학교 학칙 전문 (2026년 개정)", page: 28 },
-      { documentId: "20", documentTitle: "SW융합대학 교육과정표 (2026학년도)", page: 5 },
+      { documentId: 12, documentTitle: "국민대학교 학칙 전문 (2026년 개정)", page: 28 },
+      { documentId: 20, documentTitle: "SW융합대학 교육과정표 (2026학년도)", page: 5 },
     ] satisfies Source[],
   },
   {
@@ -81,8 +81,8 @@ export const MOCK_FAQ_ITEMS: FAQItem[] = [
     createdAt: "2026-04-06T15:50:00Z",
     helpful: 91, notHelpful: 2,
     sources: [
-      { documentId: "17", documentTitle: "졸업요건 확인 안내", page: 1 },
-      { documentId: "20", documentTitle: "SW융합대학 교육과정표 (2026학년도)", page: 12 },
+      { documentId: 17, documentTitle: "졸업요건 확인 안내", page: 1 },
+      { documentId: 20, documentTitle: "SW융합대학 교육과정표 (2026학년도)", page: 12 },
     ] satisfies Source[],
   },
   {

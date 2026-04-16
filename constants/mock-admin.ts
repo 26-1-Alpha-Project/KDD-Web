@@ -14,23 +14,20 @@ export const MOCK_ADMIN_STATISTICS: AdminStatistics = {
   },
   users: {
     totalUsers: 12847,
-    byUserType: [
-      { type: "학생", count: 10278 },
-      { type: "교직원", count: 2569 },
-    ],
-    byDepartment: [
-      { department: "소프트웨어학부", count: 5243 },
-      { department: "AI빅데이터융합경영학과", count: 3184 },
-      { department: "빅데이터경영통계학과", count: 2470 },
-      { department: "기타", count: 1950 },
-    ],
-    byGrade: [
-      { grade: "1학년", count: 3120 },
-      { grade: "2학년", count: 2980 },
-      { grade: "3학년", count: 2760 },
-      { grade: "4학년", count: 2030 },
-      { grade: "5학년 이상", count: 1957 },
-    ],
+    byUserType: { student: 10278, staff: 2569 },
+    byDepartment: {
+      소프트웨어학부: 5243,
+      "AI빅데이터융합경영학과": 3184,
+      빅데이터경영통계학과: 2470,
+      기타: 1950,
+    },
+    byGrade: {
+      "1": 3120,
+      "2": 2980,
+      "3": 2760,
+      "4": 2030,
+      "5_or_above": 1957,
+    },
   },
   categories: [
     { category: "학사", questionCount: 3597, percentage: 28.0 },
@@ -49,7 +46,6 @@ export const MOCK_ADMIN_DOCUMENTS: AdminDocument[] = [
   {
     id: 1,
     title: "2024년도 학사요람.pdf",
-    size: "2.4MB",
     categoryId: 1,
     categoryName: "SW 학사공지",
     status: "completed",
@@ -59,7 +55,6 @@ export const MOCK_ADMIN_DOCUMENTS: AdminDocument[] = [
   {
     id: 2,
     title: "소프트웨어융합대학 교육과정표 2026.pdf",
-    size: "1.8MB",
     categoryId: 5,
     categoryName: "SW 졸업요건",
     status: "completed",
@@ -69,7 +64,6 @@ export const MOCK_ADMIN_DOCUMENTS: AdminDocument[] = [
   {
     id: 3,
     title: "2026학년도 1학기 학사일정.pdf",
-    size: "0.5MB",
     categoryId: 6,
     categoryName: "국민대학교 공지",
     status: "completed",
@@ -79,7 +73,6 @@ export const MOCK_ADMIN_DOCUMENTS: AdminDocument[] = [
   {
     id: 4,
     title: "장학금 안내 및 신청서류.pdf",
-    size: "1.2MB",
     categoryId: 3,
     categoryName: "SW 장학공지",
     status: "processing",
@@ -89,7 +82,6 @@ export const MOCK_ADMIN_DOCUMENTS: AdminDocument[] = [
   {
     id: 5,
     title: "학칙 전문 (개정 2025.12).pdf",
-    size: "3.1MB",
     categoryId: 1,
     categoryName: "SW 학사공지",
     status: "completed",
@@ -99,7 +91,6 @@ export const MOCK_ADMIN_DOCUMENTS: AdminDocument[] = [
   {
     id: 6,
     title: "현장실습 운영 규정 개정안.pdf",
-    size: "0.8MB",
     categoryId: 2,
     categoryName: "SW 취업공지",
     status: "uploaded",
@@ -109,7 +100,6 @@ export const MOCK_ADMIN_DOCUMENTS: AdminDocument[] = [
   {
     id: 7,
     title: "2025년도 수시 모집요강.pdf",
-    size: "4.2MB",
     categoryId: 6,
     categoryName: "국민대학교 공지",
     status: "failed",
@@ -119,7 +109,6 @@ export const MOCK_ADMIN_DOCUMENTS: AdminDocument[] = [
   {
     id: 8,
     title: "AI빅데이터융합경영학과 교육과정.pdf",
-    size: "2.0MB",
     categoryId: 5,
     categoryName: "SW 졸업요건",
     status: "reprocessing",

@@ -13,7 +13,7 @@ interface ChatMessageProps {
   message: ChatMessageType;
   isStreaming?: boolean;
   onSelectQuestion?: (question: string) => void;
-  onOpenPDF?: (documentId: string, page: number) => void;
+  onOpenPDF?: (documentId: number, page: number) => void;
 }
 
 export function ChatMessage({

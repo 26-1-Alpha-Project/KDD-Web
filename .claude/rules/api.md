@@ -19,6 +19,30 @@ globs: ["lib/api/**/*.ts", "types/api*.ts", "app/api/**/*.ts", "hooks/use*Query*
 - fetch 래퍼나 axios 인스턴스 등 공통 유틸이 있으면 반드시 재사용
 - 새로운 HTTP 클라이언트를 직접 만들지 않는다
 
+## 백엔드 DTO 크로스 검증 (필수)
+- 프론트 타입을 작성/수정할 때 **반드시 백엔드 DTO(d:/GIthub/kdd-api)와 대조**한다
+- 명세서(.claude/docs/api-*.md)만 보지 말고, 실제 Java record/class의 필드명·타입·nullable 여부를 확인한다
+- 특히 주의할 불일치 패턴:
+  - `Long`(Java) → `number`(TS), `String`(Java) → `string`(TS) — **`string`과 `number` 혼동 금지**
+  - 백엔드 파라미터명(`size`)과 프론트 파라미터명(`pageSize`)이 다를 수 있다 — Controller의 `@RequestParam` 확인
+  - 백엔드 non-nullable 필드를 프론트에서 optional(`?`)로 정의하지 않는다
+  - 백엔드 DTO에 없는 필드를 프론트 타입에 추가하지 않는다 (UI 전용 필드는 별도 타입으로 분리)
+
+## 쿠키 경로(Path) 스코핑
+- 백엔드가 `Set-Cookie: Path=/auth`로 쿠키를 설정하면, 브라우저는 **요청 URL 경로가 `/auth`로 시작할 때만** 해당 쿠키를 전송한다
+- `/api/backend/auth/*`로 프록시하면 쿠키가 전송되지 않는다 — 경로가 `/api/backend/...`이므로
+- **해결**: 쿠키 Path와 일치하는 경로로 직접 rewrite 설정 (예: `/auth/refresh` → backend)
+
+## SSE/스트리밍은 프록시를 거치지 않는다
+- Next.js rewrites는 HTTP 응답을 버퍼링할 수 있어 SSE 실시간 스트리밍이 깨진다
+- SSE 요청은 `NEXT_PUBLIC_API_BASE_URL`로 백엔드에 직접 fetch한다
+- `apiClient`를 사용하지 않고 직접 fetch + Authorization 헤더 주입
+
+## API 에러 응답 처리 (필수)
+- 모든 API 호출의 catch 블록에서 `ApiError`를 확인하고 `ERROR_MESSAGES`로 사용자에게 표시한다
+- 에러를 무시하는 빈 catch(`catch {}`, `catch { // TODO }`)는 금지
+- 에러 표시 위치: 해당 UI 컴포넌트에 에러 상태(state) + 조건부 렌더링
+
 ## 예시 구조
 ```text
 types/

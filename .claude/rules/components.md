@@ -39,6 +39,16 @@ export function ComponentName({ onSend }: ComponentNameProps) {
 - `window.prompt`, `window.alert`, `window.confirm` 등 브라우저 네이티브 다이얼로그 사용 금지
 - 사용자 입력이 필요하면 인라인 편집, 커스텀 모달, 또는 UI 컴포넌트로 구현
 
+## React Strict Mode 대응
+- `useEffect` 내 1회성 사이드이펙트(OAuth code 처리, API 호출 등)는 Strict Mode에서 2번 실행된다
+- `useRef`는 Strict Mode 언마운트→재마운트 시 리셋되므로 중복 방지에 **사용 금지**
+- 대신 `sessionStorage` 키로 중복 실행을 방지한다 (예: `oauth_code_handled_${code}`)
+
+## 이미지 슬라이드/캐러셀
+- 슬라이드 전환 시 `<Image src={slides[current]}>`처럼 src를 바꾸면 매번 새로 다운로드한다
+- **모든 이미지를 한 번에 렌더링**하고 CSS `opacity-0/100` 전환으로 보이기/숨기기 처리
+- 첫 번째 이미지에만 `priority` 설정
+
 ## 기존 패턴 참조
 - 기본 컴포넌트: `components/chat/ChatHeader.tsx`
 - Props + 콜백: `components/chat/ChatInput.tsx`

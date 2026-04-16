@@ -1,17 +1,34 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatWelcome } from "@/components/chat/ChatWelcome";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { useChatContext } from "@/components/chat/ChatContext";
+import { getRecommendedQuestions } from "@/lib/api/services/chat.service";
+import type { RecommendedQuestion } from "@/types/api/chat";
 
 export default function ChatPage() {
   const router = useRouter();
+  const { createNewSession } = useChatContext();
+  const [recommendations, setRecommendations] = useState<RecommendedQuestion[]>([]);
 
-  const handleSend = (message: string) => {
-    // TODO: 실제 채팅 API 연동 후 새 세션 생성 → /chat/[id]로 이동
-    const newId = `new-${Date.now()}`;
-    router.push(`/chat/${newId}?q=${encodeURIComponent(message)}`);
+  useEffect(() => {
+    getRecommendedQuestions()
+      .then((res) => setRecommendations(res.questions))
+      .catch(() => setRecommendations([]));
+  }, []);
+
+  const handleSend = async (message: string) => {
+    try {
+      const sessionId = await createNewSession();
+      router.push(`/chat/${sessionId}?q=${encodeURIComponent(message)}`);
+    } catch {
+      // 세션 생성 실패 시 임시 id로 이동
+      const tempId = `new-${Date.now()}`;
+      router.push(`/chat/${tempId}?q=${encodeURIComponent(message)}`);
+    }
   };
 
   return (
@@ -19,7 +36,10 @@ export default function ChatPage() {
       <ChatHeader />
       <div className="relative min-h-0 flex-1">
         <div className="mx-auto flex h-full max-w-3xl flex-col overflow-y-auto px-4 pt-6 pb-24">
-          <ChatWelcome onSuggestionClick={handleSend} />
+          <ChatWelcome
+            onSuggestionClick={handleSend}
+            recommendations={recommendations}
+          />
         </div>
         <ChatInput
           onSend={handleSend}
