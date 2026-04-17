@@ -162,6 +162,23 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* 기본 포커스/활성 검은 링 제거 — 키보드 포커스(:focus-visible)만 노출 */
+*:focus {
+  outline: none;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* 모바일 탭 하이라이트 제거 */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* 커스텀 스크롤바 — shadcn 스타일 */
 * {
   scrollbar-width: thin;
