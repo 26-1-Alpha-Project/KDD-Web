@@ -20,6 +20,20 @@ rewrites: [{ source: "/api/backend/:path*", destination: "${API_BASE_URL}/:path*
 apiClient의 baseUrl은 `/api/backend`로 설정. 브라우저 → Next.js → Spring Boot 순으로 프록시.
 프로덕션에서는 `NEXT_PUBLIC_API_BASE_URL`만 변경하면 됨.
 
+## 요청 경로 작성 규칙 (반드시 준수)
+
+- 백엔드 기준 URL: `/{domain}/{...}` (Spring Controller의 `@RequestMapping`)
+- 프론트 실제 호출 경로: `/api/backend/{domain}/{...}`
+- **항상 `apiClient`(`lib/api/client.ts`) 또는 도메인 서비스(`lib/api/services/*.ts`)를 통해 호출**한다. URL을 수동으로 조립하지 않는다.
+- 직접 `fetch`를 써야 하는 예외(SSE 등)도 `/api/backend` prefix 또는 `NEXT_PUBLIC_API_BASE_URL`을 사용한다.
+
+### 자주 발생하는 경로 실수
+
+- ❌ `fetch('/api/documents/123')` — Next.js API route로 해석되어 404
+- ❌ `fetch('/documents/123')` — Next.js가 정적 경로로 처리하려 하고 백엔드에 도달하지 않음
+- ✅ `apiClient.get('/documents/123')` → 실제 요청은 `/api/backend/documents/123`
+- ✅ PDF 파일 URL 등 "백엔드가 내려주는 URL"은 **응답의 `fileUrl` 필드 값 그대로 사용**. 프론트가 경로를 조합하지 않는다.
+
 ## 인증 흐름
 
 ### Access Token
@@ -66,12 +80,12 @@ apiClient의 baseUrl은 `/api/backend`로 설정. 브라우저 → Next.js → S
 | Chat | GET /chat/sessions/{id} | 완료 |
 | Chat | PATCH /chat/sessions/{id} | 완료 |
 | Chat | DELETE /chat/sessions/{id} | 완료 |
-| Chat | POST /chat/sessions/{id}/messages (SSE) | 진행 중 |
+| Chat | POST /chat/sessions/{id}/messages (SSE) | 완료 |
 | Documents | GET /documents/categories | 완료 |
 | Documents | GET /documents/by-category | 완료 |
-| Documents | GET /documents | 진행 중 |
-| Documents | GET /documents/{id} | 진행 중 |
-| Documents | GET /documents/popular | 진행 중 |
+| Documents | GET /documents | 완료 |
+| Documents | GET /documents/{id} | 완료 |
+| Documents | GET /documents/popular | 완료 |
 | Admin | GET /admin/documents | 완료 |
 | Admin | POST /admin/documents | 완료 |
 | Admin | GET /admin/documents/{id}/status | 완료 |

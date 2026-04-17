@@ -15,11 +15,38 @@ globs: ["lib/api/**/*.ts", "types/api*.ts", "app/api/**/*.ts", "hooks/use*Query*
 - 타입 변경이 필요하면 사용자에게 먼저 확인
 
 ## API 호출 패턴
+
 - API 호출 함수는 `lib/api/`에 도메인별로 분리
 - fetch 래퍼나 axios 인스턴스 등 공통 유틸이 있으면 반드시 재사용
 - 새로운 HTTP 클라이언트를 직접 만들지 않는다
 
+## URL 경로 규칙 (필수)
+
+- **백엔드 URL**: `/{domain}/{...}` (Spring Controller의 `@RequestMapping` 값)
+- **프론트 실제 호출 경로**: `/api/backend/{domain}/{...}` (Next.js rewrites)
+- **원칙**: 항상 `apiClient` 또는 `lib/api/services/*.ts`의 서비스 함수를 통해 호출한다. URL을 수동으로 조립하지 않는다.
+- 직접 `fetch`가 필요한 예외(SSE 등)도 `/api/backend/*` prefix 또는 `NEXT_PUBLIC_API_BASE_URL`을 사용한다.
+
+### 자주 틀리는 패턴
+
+- ❌ `fetch('/api/documents/123')` — Next.js API route로 해석되어 404
+- ❌ `fetch('/documents/123')` — 백엔드에 도달하지 않음
+- ✅ `apiClient.get('/documents/123')` → 실제 요청은 `/api/backend/documents/123`
+- ✅ 파일 URL 등 "백엔드가 내려주는 URL"은 **응답 DTO의 필드값(`fileUrl` 등)을 그대로 사용**. 프론트가 경로를 조합하지 않는다.
+
+## API 기능 구현 전 체크리스트 (필수)
+
+새로운 API를 호출하는 기능을 구현하기 전에 **반드시 아래 4단계를 순서대로** 수행한다.
+
+1. **노션 원본 명세 확인** — `.claude/docs/api-info/*.md`에서 해당 기능 문서 열기 (예: "문서 상세 조회 *.md")
+2. **요약 명세 확인** — `.claude/docs/api-{도메인}.md`에서 엔드포인트/응답 필드 대조
+3. **백엔드 실제 구현 확인** — `d:/GIthub/kdd-api` 의 Controller/DTO를 직접 열어 `@RequestMapping`, `@RequestParam`, record 필드명을 확인
+4. **실제 응답 1회 호출** — Swagger UI(`http://localhost:8000/swagger-ui`) 또는 curl로 샘플 응답을 확인하고, 필드 존재/값 형태를 눈으로 본다
+
+위 4단계를 생략하고 "명세서에 있었던 것 같아서" 구현하는 것이 지금까지 반복된 사고의 공통 원인이다.
+
 ## 백엔드 DTO 크로스 검증 (필수)
+
 - 프론트 타입을 작성/수정할 때 **반드시 백엔드 DTO(d:/GIthub/kdd-api)와 대조**한다
 - 명세서(.claude/docs/api-*.md)만 보지 말고, 실제 Java record/class의 필드명·타입·nullable 여부를 확인한다
 - 특히 주의할 불일치 패턴:
