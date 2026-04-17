@@ -86,7 +86,7 @@ apiClient의 baseUrl은 `/api/backend`로 설정. 브라우저 → Next.js → S
 
 ## 프론트 타입 ↔ 백엔드 DTO 불일치 사항
 
-1. **UserResponse.role**: 백엔드는 `"ROLE_USER"` / `"ROLE_ADMIN"` (ROLE_ prefix), 명세서는 `"user"` / `"admin"` → 백엔드 실제 구현(ROLE_ prefix)을 따름
+1. **UserResponse.role**: `"user"` / `"admin"` (소문자 리터럴, Role enum 값)
 2. **admin 문서 목록 페이지 파라미터**: 백엔드는 `size` (not `pageSize`)
 3. **문서 상세 조회**: 명세서 응답과 백엔드 DTO 구조 차이 (사용자용 vs 관리자용이 다를 수 있음)
 4. **refreshToken 쿠키 Path=/auth**: 프록시 경로 `/api/backend/auth/*`를 통해야 쿠키 전송됨

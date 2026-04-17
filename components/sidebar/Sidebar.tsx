@@ -36,7 +36,7 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
   const pathname = usePathname();
   const { chatHistory, deleteChat, renameChat } = useChatContext();
   const { logout, user } = useAuth();
-  const isAdmin = user?.role === "ROLE_ADMIN";
+  const isAdmin = user?.role === "admin";
   const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);

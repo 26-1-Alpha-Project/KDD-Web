@@ -14,7 +14,7 @@
   "userId": 1,
   "email": "user@kookmin.ac.kr",
   "name": "홍길동",
-  "role": "ROLE_USER",
+  "role": "user",
   "profileCompleted": true,
   "userType": "student",
   "studentId": "20201234",
@@ -34,7 +34,7 @@
 | userId | number | 사용자 고유 ID |
 | email | string | Google 계정 이메일 |
 | name | string | 사용자 이름 |
-| role | string \| null | "ROLE_USER" \| "ROLE_ADMIN" |
+| role | string \| null | "user" \| "admin" |
 | profileCompleted | boolean | 프로필 입력 완료 여부 |
 | userType | string \| null | "student" \| "staff" |
 | studentId | string \| null | 학번 (학생만) |

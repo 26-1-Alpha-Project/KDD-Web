@@ -22,7 +22,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
-  if (!isLoading && user?.role !== "ROLE_ADMIN") {
+  if (!isLoading && user?.role !== "admin") {
     router.replace("/chat");
     return null;
   }

@@ -3,7 +3,7 @@ export interface UserResponse {
   userId: number;
   email: string;
   name: string;
-  role: string | null; // "ROLE_USER" | "ROLE_ADMIN"
+  role: string | null; // "user" | "admin"
   profileCompleted: boolean;
   userType: string | null; // "student" | "staff"
 
