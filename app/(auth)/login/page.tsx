@@ -102,6 +102,8 @@ function LoginPageContent() {
         setAuthCookies(me.role, me.profileCompleted);
 
         if (!response.isProfileCompleted) {
+          updateBasicInfo("name", me.name ?? "");
+          updateBasicInfo("email", me.email ?? "");
           setPhase("profile");
         } else {
           router.replace("/chat");
@@ -313,9 +315,11 @@ function LoginPageContent() {
 
         {/* Error message */}
         {loginError && (
-          <p className="text-xs text-destructive text-center shrink-0">
-            {loginError}
-          </p>
+          <div className="shrink-0 rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 mt-2">
+            <p className="text-sm text-destructive text-center font-medium">
+              {loginError}
+            </p>
+          </div>
         )}
 
         {/* Bottom buttons */}
