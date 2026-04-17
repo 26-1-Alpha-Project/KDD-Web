@@ -1,8 +1,23 @@
 # Documents API 명세서
 
+## 요청 경로 규칙 (반드시 준수)
+
+- **백엔드 URL**: `/documents/{...}` (기준 경로, Spring Controller의 `@RequestMapping` 값)
+- **프론트 프록시 경로**: `/api/backend/documents/{...}` (Next.js rewrites가 백엔드로 포워딩)
+- **프론트 호출 방법**: `apiClient.get('/documents/{id}')` — apiClient의 baseUrl이 `/api/backend`로 이미 세팅되어 있음
+- **직접 fetch를 쓰더라도** 경로는 `/api/backend/documents/{...}` 여야 함
+
+### 흔한 실수
+
+- ❌ `fetch('/api/documents/123')` — Next.js API route로 해석되어 404
+- ❌ `fetch('/documents/123')` — Vercel에서 정적 자원으로 해석되어 404
+- ✅ `apiClient.get('/documents/123')` — 자동으로 `/api/backend/documents/123` 호출
+- ✅ PDF 뷰어 등에서 파일 URL이 필요하면 **백엔드 응답의 `fileUrl` 필드를 그대로 사용**. 프론트가 경로를 만들지 않는다.
+
+---
+
 ## 사용자 API (백엔드 prefix: `/documents`)
 
-프론트 프록시 경로: `/api/backend/documents/*`
 모든 엔드포인트 인증 필요: `Authorization: Bearer <accessToken>`
 
 ---
@@ -107,9 +122,9 @@
 
 ### GET /documents/{documentId} — 문서 상세 조회
 
-**백엔드 구현 상태**: 진행 중 (DocumentController에 아직 없음)
+**백엔드 구현 상태**: 완료 (`DocumentController.getDocumentDetail`, `DocumentDetailPublicResponse`)
 
-#### 성공 응답 (200) — 명세서 기준
+#### 성공 응답 (200)
 ```json
 {
   "documentId": 1,
@@ -117,10 +132,12 @@
   "category": "string",
   "fileUrl": "string",
   "viewCount": 100,
-  "updatedAt": "string",
-  "createdAt": "string"
+  "createdAt": "string",
+  "updatedAt": "string"
 }
 ```
+
+- `fileUrl`: 백엔드 `Document.storageKey` 값을 그대로 반환. 프론트는 이 값을 PDF 뷰어/다운로드 링크에 그대로 사용해야 하며, 임의로 경로를 조합하지 않는다.
 
 #### 에러: 401 UNAUTHORIZED, 404 DOCUMENT_NOT_FOUND, 500 INTERNAL_SERVER_ERROR
 
@@ -128,7 +145,7 @@
 
 ### GET /documents/popular — 인기 문서 조회
 
-**백엔드 구현 상태**: 진행 중
+**백엔드 구현 상태**: 완료
 
 #### 성공 응답 (200)
 ```json
@@ -291,9 +308,10 @@ record DocumentCategoryUpdateRequest { Long categoryId; }
 
 ## 명세서 vs 백엔드 차이점
 
-1. **GET /documents, GET /documents/{documentId}, GET /documents/popular**: 백엔드 DocumentController에 아직 없음 (진행 중)
-   - 프론트는 명세서 기준으로 타입 정의, 백엔드 구현 완료 시 연동
-2. **관리자 문서 목록**: 백엔드 파라미터명이 `size` (not `pageSize`)
-   - `@RequestParam(defaultValue = "20") int size`
-3. **문서 상세 응답**: 명세서는 `documentId`, `category`, `fileUrl`, `viewCount`, `updatedAt` / 백엔드 DTO는 `id`, `categoryName`, `originalFilename`, `fileSize` — **구조 불일치**
-   - 사용자용 상세 조회 (`/documents/{documentId}`)와 관리자용 상세 (`DocumentDetailResponse`)가 다를 수 있음
+1. **사용자용 상세 vs 관리자용 상세**: 응답 DTO가 다름
+   - 사용자: `DocumentDetailPublicResponse` (`documentId`, `title`, `category`, `fileUrl`, `viewCount`, `createdAt`, `updatedAt`)
+   - 관리자: `DocumentDetailResponse` (카테고리/파일/처리 상태 등 추가 필드)
+2. **관리자 문서 목록 페이지네이션**: 백엔드 파라미터명이 `size` (일반 사용자 API의 `pageSize`와 다름)
+   - `AdminDocumentController.getDocuments`: `@RequestParam(defaultValue = "20") int size`
+   - 프론트 `admin.service.ts`에서 `pageSize` → `size` 매핑 수행
+3. **`fileUrl` 사용 규칙**: 프론트는 백엔드가 반환한 `fileUrl`을 그대로 사용해야 하며, `/api/documents/{id}` 같은 경로를 임의 조합하지 않는다.
