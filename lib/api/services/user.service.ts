@@ -8,7 +8,7 @@ const MOCK_USER: UserResponse = {
   userId: 1,
   email: 'honggildong@kookmin.ac.kr',
   name: '홍길동',
-  role: 'ROLE_USER',
+  role: 'user',
   profileCompleted: true,
   userType: 'student',
   studentId: '20201234',

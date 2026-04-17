@@ -103,44 +103,43 @@ export function useSSEStream(sessionId: string): UseSSEStreamReturn {
         const decoder = new TextDecoder();
         let buffer = "";
 
+        const processFrame = (frame: string) => {
+          const dataLines: string[] = [];
+          for (const rawLine of frame.split("\n")) {
+            const line = rawLine.replace(/\r$/, "");
+            if (!line.startsWith("data:")) continue;
+            dataLines.push(line.startsWith("data: ") ? line.slice(6) : line.slice(5));
+          }
+          if (dataLines.length === 0) return;
+          const jsonStr = dataLines.join("\n");
+          try {
+            const event = JSON.parse(jsonStr) as SSEEvent;
+            setEvents((prev) => [...prev, event]);
+          } catch {
+            // JSON 파싱 실패 시 무시
+          }
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split("\n");
-          // 마지막 부분이 불완전할 수 있으므로 버퍼에 보관
-          buffer = parts.pop() ?? "";
 
-          for (const line of parts) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith("data:")) continue;
-
-            // Spring SseEmitter는 "data:" 또는 "data: " 형식 모두 가능
-            const jsonStr = trimmed.startsWith("data: ")
-              ? trimmed.slice(6)
-              : trimmed.slice(5);
-            try {
-              const event = JSON.parse(jsonStr) as SSEEvent;
-              setEvents((prev) => [...prev, event]);
-            } catch {
-              // JSON 파싱 실패 시 무시
-            }
+          // SSE 이벤트 경계는 빈 줄(\n\n 또는 \r\n\r\n)
+          let boundary = buffer.search(/\r?\n\r?\n/);
+          while (boundary !== -1) {
+            const frame = buffer.slice(0, boundary);
+            const match = buffer.slice(boundary).match(/^\r?\n\r?\n/);
+            buffer = buffer.slice(boundary + (match ? match[0].length : 2));
+            processFrame(frame);
+            boundary = buffer.search(/\r?\n\r?\n/);
           }
         }
 
-        // 루프 종료 후 남은 버퍼 처리
-        const remaining = buffer.trim();
-        if (remaining.startsWith("data:")) {
-          const jsonStr = remaining.startsWith("data: ")
-            ? remaining.slice(6)
-            : remaining.slice(5);
-          try {
-            const event = JSON.parse(jsonStr) as SSEEvent;
-            setEvents((prev) => [...prev, event]);
-          } catch {
-            // 무시
-          }
+        // 스트림 종료 후 남은 프레임 처리
+        if (buffer.trim().length > 0) {
+          processFrame(buffer);
         }
       } catch (err) {
         const message =

@@ -38,8 +38,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // /admin: ROLE_ADMIN이 아니면 /chat으로 리다이렉트
-  if (pathname.startsWith("/admin") && userRole !== "ROLE_ADMIN") {
+  // /admin: admin이 아니면 /chat으로 리다이렉트
+  if (pathname.startsWith("/admin") && userRole !== "admin") {
     return NextResponse.redirect(new URL("/chat", request.url));
   }
 

@@ -28,6 +28,18 @@ globs: ["lib/api/**/*.ts", "types/api*.ts", "app/api/**/*.ts", "hooks/use*Query*
   - 백엔드 non-nullable 필드를 프론트에서 optional(`?`)로 정의하지 않는다
   - 백엔드 DTO에 없는 필드를 프론트 타입에 추가하지 않는다 (UI 전용 필드는 별도 타입으로 분리)
 
+## Spring Security 내부 값과 API 응답값 혼동 금지
+- Spring Security의 `hasRole("ADMIN")`은 내부적으로 `ROLE_ADMIN` authority와 비교하지만, 이는 **권한 체크용 내부 prefix**일 뿐 실제 API 응답 값이 아니다
+- API 응답의 `role` 필드는 DTO의 `getRole().getValue()` 결과(enum `value` 속성)를 그대로 따른다
+  - 예: `Role.USER("user")`, `Role.ADMIN("admin")` → 응답은 `"user"` / `"admin"`
+- 프론트에서 role 비교 시 **`"ROLE_USER"` / `"ROLE_ADMIN"`이 아니라 enum의 `value`(소문자 리터럴)와 비교**한다
+- 백엔드 DTO의 `from()` 팩토리 메서드와 enum `value` 필드를 반드시 함께 확인한다
+
+## 실제 API 응답으로 검증 (필수)
+- 명세서와 백엔드 DTO 구조가 일치하더라도, **실제 응답 값**(enum의 직렬화 결과, null 여부 등)을 직접 확인한다
+- 관리자/권한 분기 로직 등 구현 후 바로 UI 테스트가 어려운 경로는 **Swagger UI(`/swagger-ui`) 또는 curl로 응답 샘플**을 확인하고 구현한다
+- "명세서 + 코드만 보고" 구현한 값은 런타임 직렬화 규칙을 놓쳐 한참 뒤 문제가 드러날 수 있다
+
 ## 쿠키 경로(Path) 스코핑
 - 백엔드가 `Set-Cookie: Path=/auth`로 쿠키를 설정하면, 브라우저는 **요청 URL 경로가 `/auth`로 시작할 때만** 해당 쿠키를 전송한다
 - `/api/backend/auth/*`로 프록시하면 쿠키가 전송되지 않는다 — 경로가 `/api/backend/...`이므로
