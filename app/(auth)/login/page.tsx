@@ -135,6 +135,8 @@ function LoginPageContent() {
       redirect_uri: GOOGLE_REDIRECT_URI,
       response_type: "code",
       scope: "email profile",
+      prompt: "select_account",
+      hd: "kookmin.ac.kr",
     });
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
