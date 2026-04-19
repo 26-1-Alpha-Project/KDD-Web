@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -116,33 +116,33 @@ export default function ChatDetailPage({ params }: Props) {
 
   // 스트리밍 완료 시 메시지 목록에 추가 + 서버 제목 동기화
   // done 이벤트가 누락되거나 포맷이 스펙과 달라도 누적된 텍스트가 있으면 반드시 확정한다.
-  // (done 필수 조건이면 스트림이 닫힌 직후 streamingText가 사라지면서 응답이 통째로 소실된다)
-  useEffect(() => {
+  // useLayoutEffect로 paint 전에 commit → isStreaming=false로 전환된 프레임과 동일 프레임에
+  // messages도 갱신돼서 스트리밍 버블이 사라지며 응답이 통째로 보이지 않게 되는 짧은 gap을 제거한다.
+  useLayoutEffect(() => {
     if (isStreaming) return;
     if (fallbackEvent || errorEvent) return;
 
     const partial = buildMessagesFromEvents(events);
+    if (!partial.content) return;
 
-    if (partial.content) {
-      const assistantMessage: ChatMessage = {
-        messageId: `${id}-${Date.now()}-reply`,
-        role: "assistant",
-        content: partial.content,
-        confidence: partial.confidence,
-        sources: partial.sources,
-        suggestedQuestions: partial.suggestedQuestions,
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      reset();
+    const assistantMessage: ChatMessage = {
+      messageId: `${id}-${Date.now()}-reply`,
+      role: "assistant",
+      content: partial.content,
+      confidence: partial.confidence,
+      sources: partial.sources,
+      suggestedQuestions: partial.suggestedQuestions,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, assistantMessage]);
+    reset();
 
-      // 백엔드가 생성한 세션 제목으로 사이드바 동기화
-      const numericId = Number(id);
-      if (!isNaN(numericId)) {
-        getSessionDetail(numericId)
-          .then((res) => renameChat(id, res.title))
-          .catch(() => {});
-      }
+    // 백엔드가 생성한 세션 제목으로 사이드바 동기화
+    const numericId = Number(id);
+    if (!isNaN(numericId)) {
+      getSessionDetail(numericId)
+        .then((res) => renameChat(id, res.title))
+        .catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStreaming]);
