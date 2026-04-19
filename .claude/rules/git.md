@@ -16,6 +16,24 @@
   2. 각 브랜치에서 필요한 타입을 중복 정의 → 머지 시 충돌 해결로 통합
 - 체인 PR(PR A → PR B → PR C)은 리베이스 전파 문제로 사용하지 않는다
 
+## develop / main 직접 작업 금지 (절대)
+
+- **`develop`, `main` 브랜치에 직접 commit·push 금지.** GitHub Ruleset이 막지만 Claude도 시도조차 하지 않는다
+- **로컬에서도 `develop` checkout 상태로 코드 수정/커밋하지 않는다.** 변경 시작 전 항상 `feature/*` 또는 `hotfix/*` 브랜치로 분기
+- 실수로 develop에 직접 commit한 상태로 발견되면:
+  1. 새 `feature/*` 브랜치를 그 시점에서 생성하여 커밋을 옮긴다
+  2. 로컬 `develop`을 `git reset --hard origin/develop`으로 되돌린다
+  3. 새 브랜치를 push하고 PR 생성
+- `git push origin develop` 명령은 **절대 실행하지 않는다** (ruleset이 거부함, 시도 자체가 워크플로우 위반)
+
+## PR 머지
+
+- **본인이 작성한 PR을 본인이 머지하지 않는다.** Ruleset이 승인 0개를 허용하더라도 다른 팀원의 리뷰/승인을 기다린다
+- 사용자가 명시적으로 "PR 올리고 병합"을 함께 요청한 경우에 한해 본인 머지 가능. 이 경우에도 사용자에게 확인 후 진행
+- 머지 방식은 **squash 권장** (linear history 유지). merge commit 방식 금지
+- 머지 후 feature 브랜치는 자동 삭제 (`gh pr merge --delete-branch`)
+- 머지 후 로컬 develop은 `git fetch && git reset --hard origin/develop`으로 동기화 (squash 특성상 로컬/원격 SHA가 분기되므로)
+
 ## PR 생성
 
 - PR 본문은 반드시 **조직 PR 템플릿** 양식을 사용한다
