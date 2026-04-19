@@ -3,6 +3,15 @@
 import { ChevronLeft, ChevronRight, FileText, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
+const BACKEND_PROXY_PREFIX = "/api/backend";
+
+function resolveBackendUrl(fileUrl: string): string | null {
+  if (!fileUrl) return null;
+  if (/^(https?:|blob:|data:)/i.test(fileUrl)) return fileUrl;
+  if (fileUrl.startsWith("/")) return `${BACKEND_PROXY_PREFIX}${fileUrl}`;
+  return null;
+}
+
 interface PDFViewerProps {
   open: boolean;
   onClose: () => void;
@@ -18,14 +27,18 @@ export function PDFViewer({
   title,
   initialPage,
 }: PDFViewerProps) {
-  // fileUrl이 절대 URL(http/https/blob/data)이 아니면 브라우저가 현재 페이지 기준
-  // 상대경로로 해석해서 우리 사이트가 iframe 안에 또 로드되는 현상이 발생한다.
-  // 절대 URL일 때만 iframe에 넣고, 아니면 about:blank로 빈 화면 유지.
-  const isLoadable = /^(https?:|blob:|data:)/i.test(fileUrl);
+  // 백엔드가 내려주는 fileUrl 형식을 iframe에서 로드 가능한 URL로 해석한다.
+  // - 절대 URL(http/https/blob/data): 그대로 사용
+  // - 백엔드 상대경로(예: "/documents/3/file"): Next.js rewrites 프록시 prefix 부착
+  //   (그대로 두면 브라우저가 프론트 origin 기준으로 해석해 우리 사이트가 iframe 안에
+  //   다시 로드되거나 404 발생)
+  // - 그 외: 안내 메시지 표시
+  const resolvedUrl = resolveBackendUrl(fileUrl);
+  const isLoadable = resolvedUrl !== null;
   const iframeSrc = isLoadable
     ? initialPage
-      ? `${fileUrl}#page=${initialPage}`
-      : fileUrl
+      ? `${resolvedUrl}#page=${initialPage}`
+      : resolvedUrl
     : "about:blank";
   const pageLabel = initialPage ?? 1;
 
