@@ -105,15 +105,13 @@ export default function ChatDetailPage({ params }: Props) {
   const errorEvent = events.find((e) => e.type === "error");
 
   // 스트리밍 완료 시 메시지 목록에 추가 + 서버 제목 동기화
+  // done 이벤트가 누락되거나 포맷이 스펙과 달라도 누적된 텍스트가 있으면 반드시 확정한다.
+  // (done 필수 조건이면 스트림이 닫힌 직후 streamingText가 사라지면서 응답이 통째로 소실된다)
   useEffect(() => {
-    const doneEvent = events.find((e) => e.type === "done");
-    if (!doneEvent || isStreaming) return;
+    if (isStreaming) return;
+    if (fallbackEvent || errorEvent) return;
 
     const partial = buildMessagesFromEvents(events);
-
-    if (fallbackEvent) {
-      return;
-    }
 
     if (partial.content) {
       const assistantMessage: ChatMessage = {
