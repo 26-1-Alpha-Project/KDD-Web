@@ -11,6 +11,7 @@ import { PDFViewer } from "@/components/shared/PDFViewer";
 import { useChatContext } from "@/components/chat/ChatContext";
 import { useSSEStream } from "@/hooks/useSSEStream";
 import { getSessionDetail } from "@/lib/api/services/chat.service";
+import { getDocumentDetail } from "@/lib/api/services/document.service";
 import type { ChatMessage } from "@/types/chat";
 import type { SSEEvent, ChatMessageResponse } from "@/types/api/chat";
 
@@ -161,13 +162,18 @@ export default function ChatDetailPage({ params }: Props) {
     sendMessage(trimmed);
   };
 
-  const handleOpenPDF = (documentId: number, page: number) => {
-    setPdfViewer({
-      open: true,
-      fileUrl: `/api/documents/${documentId}`,
-      title: `문서 (${documentId})`,
-      initialPage: page,
-    });
+  const handleOpenPDF = async (documentId: number, page: number) => {
+    try {
+      const detail = await getDocumentDetail(documentId);
+      setPdfViewer({
+        open: true,
+        fileUrl: detail.fileUrl,
+        title: detail.title,
+        initialPage: page,
+      });
+    } catch {
+      // 실패 시 모달 안 띄움 (디자인 변경 없이 todos 범위만 충족)
+    }
   };
 
   const handleClosePDF = () => {

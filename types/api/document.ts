@@ -49,7 +49,7 @@ export interface AdminDocumentListResponse {
   createdAt: string;
 }
 
-/** 백엔드 DocumentDetailResponse 대응 */
+/** 백엔드 DocumentDetailResponse 대응 (관리자용) */
 export interface DocumentDetailResponse {
   id: number;
   title: string;
@@ -60,6 +60,20 @@ export interface DocumentDetailResponse {
   originalFilename: string;
   fileSize: number;
   createdAt: string;
+}
+
+/**
+ * 백엔드 DocumentDetailPublicResponse 대응 (일반 사용자용 GET /documents/{id})
+ * - fileUrl: 백엔드가 내려주는 storageKey 기반 URL. 프론트가 경로를 조립하지 않고 그대로 사용한다.
+ */
+export interface DocumentDetailPublicResponse {
+  documentId: number;
+  title: string;
+  category: string;
+  fileUrl: string;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** 백엔드 DocumentStatusResponse 대응 */

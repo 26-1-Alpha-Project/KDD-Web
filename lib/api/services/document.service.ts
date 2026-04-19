@@ -4,7 +4,7 @@ import type {
   CategoryTreeListResponse,
   DocumentListRequest,
   DocumentListPageResponse,
-  DocumentDetailResponse,
+  DocumentDetailPublicResponse,
   PopularDocumentsResponse,
   DocumentByCategoryPageResponse,
 } from '@/types/api/document';
@@ -84,22 +84,20 @@ export async function getDocuments(params?: DocumentListRequest): Promise<Docume
   });
 }
 
-export async function getDocumentDetail(fileId: number): Promise<DocumentDetailResponse> {
+export async function getDocumentDetail(documentId: number): Promise<DocumentDetailPublicResponse> {
   if (USE_MOCK) {
     await delay(300);
     return {
-      id: fileId,
+      documentId,
       title: '문서 상세',
-      categoryId: 1,
-      categoryName: '학사규정',
-      status: 'completed',
-      source: 'SW',
-      originalFilename: 'document.pdf',
-      fileSize: 102400,
-      createdAt: '2026-01-01',
+      category: '학사규정',
+      fileUrl: `/mock/documents/${documentId}.pdf`,
+      viewCount: 0,
+      createdAt: '2026-01-01T00:00:00',
+      updatedAt: '2026-01-01T00:00:00',
     };
   }
-  return apiClient.get<DocumentDetailResponse>(`/documents/${fileId}`);
+  return apiClient.get<DocumentDetailPublicResponse>(`/documents/${documentId}`);
 }
 
 export async function getPopularDocuments(): Promise<PopularDocumentsResponse> {
