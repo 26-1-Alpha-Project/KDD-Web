@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -11,6 +11,7 @@ import { PDFViewer } from "@/components/shared/PDFViewer";
 import { useChatContext } from "@/components/chat/ChatContext";
 import { useSSEStream } from "@/hooks/useSSEStream";
 import { getSessionDetail } from "@/lib/api/services/chat.service";
+import { getDocumentDetail } from "@/lib/api/services/document.service";
 import type { ChatMessage } from "@/types/chat";
 import type { SSEEvent, ChatMessageResponse } from "@/types/api/chat";
 
@@ -82,22 +83,32 @@ export default function ChatDetailPage({ params }: Props) {
   const { events, isStreaming, sendMessage, reset } = useSSEStream(id);
 
   // 세션 상세 로드 (히스토리 메시지)
+  // 초기 1회만 서버 응답으로 채운다. fetch가 늦게 resolve돼서 유저가 이미 새 메시지를 추가한
+  // 상태를 덮어쓰면 방금 나눈 대화가 통째로 사라진다 (StrictMode 중복 fetch에서 특히 잘 터짐).
   useEffect(() => {
     const numericId = Number(id);
     if (isNaN(numericId)) {
       setSessionLoaded(true);
       return;
     }
+    let cancelled = false;
     getSessionDetail(numericId)
       .then((res) => {
-        if (res.messages.length > 0) {
-          setMessages(res.messages.map(mapApiMessageToLocal));
-        }
+        if (cancelled) return;
+        if (res.messages.length === 0) return;
+        setMessages((prev) =>
+          prev.length === 0 ? res.messages.map(mapApiMessageToLocal) : prev
+        );
       })
       .catch(() => {
         // 세션 로드 실패 시 빈 메시지로 시작
       })
-      .finally(() => setSessionLoaded(true));
+      .finally(() => {
+        if (!cancelled) setSessionLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   // SSE 이벤트로부터 fallback/error 이벤트 추출
@@ -105,36 +116,34 @@ export default function ChatDetailPage({ params }: Props) {
   const errorEvent = events.find((e) => e.type === "error");
 
   // 스트리밍 완료 시 메시지 목록에 추가 + 서버 제목 동기화
-  useEffect(() => {
-    const doneEvent = events.find((e) => e.type === "done");
-    if (!doneEvent || isStreaming) return;
+  // done 이벤트가 누락되거나 포맷이 스펙과 달라도 누적된 텍스트가 있으면 반드시 확정한다.
+  // useLayoutEffect로 paint 전에 commit → isStreaming=false로 전환된 프레임과 동일 프레임에
+  // messages도 갱신돼서 스트리밍 버블이 사라지며 응답이 통째로 보이지 않게 되는 짧은 gap을 제거한다.
+  useLayoutEffect(() => {
+    if (isStreaming) return;
+    if (fallbackEvent || errorEvent) return;
 
     const partial = buildMessagesFromEvents(events);
+    if (!partial.content) return;
 
-    if (fallbackEvent) {
-      return;
-    }
+    const assistantMessage: ChatMessage = {
+      messageId: `${id}-${Date.now()}-reply`,
+      role: "assistant",
+      content: partial.content,
+      confidence: partial.confidence,
+      sources: partial.sources,
+      suggestedQuestions: partial.suggestedQuestions,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, assistantMessage]);
+    reset();
 
-    if (partial.content) {
-      const assistantMessage: ChatMessage = {
-        messageId: `${id}-${Date.now()}-reply`,
-        role: "assistant",
-        content: partial.content,
-        confidence: partial.confidence,
-        sources: partial.sources,
-        suggestedQuestions: partial.suggestedQuestions,
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      reset();
-
-      // 백엔드가 생성한 세션 제목으로 사이드바 동기화
-      const numericId = Number(id);
-      if (!isNaN(numericId)) {
-        getSessionDetail(numericId)
-          .then((res) => renameChat(id, res.title))
-          .catch(() => {});
-      }
+    // 백엔드가 생성한 세션 제목으로 사이드바 동기화
+    const numericId = Number(id);
+    if (!isNaN(numericId)) {
+      getSessionDetail(numericId)
+        .then((res) => renameChat(id, res.title))
+        .catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStreaming]);
@@ -153,13 +162,18 @@ export default function ChatDetailPage({ params }: Props) {
     sendMessage(trimmed);
   };
 
-  const handleOpenPDF = (documentId: number, page: number) => {
-    setPdfViewer({
-      open: true,
-      fileUrl: `/api/documents/${documentId}`,
-      title: `문서 (${documentId})`,
-      initialPage: page,
-    });
+  const handleOpenPDF = async (documentId: number, page: number) => {
+    try {
+      const detail = await getDocumentDetail(documentId);
+      setPdfViewer({
+        open: true,
+        fileUrl: detail.fileUrl,
+        title: detail.title,
+        initialPage: page,
+      });
+    } catch {
+      // 실패 시 모달 안 띄움 (디자인 변경 없이 todos 범위만 충족)
+    }
   };
 
   const handleClosePDF = () => {
