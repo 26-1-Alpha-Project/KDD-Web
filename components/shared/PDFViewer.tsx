@@ -1,7 +1,27 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, FileText, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, FileText, Loader2, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+import { authManager } from "@/lib/api/auth";
+
+// PDF.js worker — pdfjs-dist 패키지에 포함된 mjs를 번들러가 별도 청크로 처리
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
+
+const BACKEND_PROXY_PREFIX = "/api/backend";
+
+function resolveBackendUrl(fileUrl: string): string | null {
+  if (!fileUrl) return null;
+  if (/^(https?:|blob:|data:)/i.test(fileUrl)) return fileUrl;
+  if (fileUrl.startsWith("/")) return `${BACKEND_PROXY_PREFIX}${fileUrl}`;
+  return null;
+}
 
 interface PDFViewerProps {
   open: boolean;
@@ -18,16 +38,44 @@ export function PDFViewer({
   title,
   initialPage,
 }: PDFViewerProps) {
-  // fileUrl이 절대 URL(http/https/blob/data)이 아니면 브라우저가 현재 페이지 기준
-  // 상대경로로 해석해서 우리 사이트가 iframe 안에 또 로드되는 현상이 발생한다.
-  // 절대 URL일 때만 iframe에 넣고, 아니면 about:blank로 빈 화면 유지.
-  const isLoadable = /^(https?:|blob:|data:)/i.test(fileUrl);
-  const iframeSrc = isLoadable
-    ? initialPage
-      ? `${fileUrl}#page=${initialPage}`
-      : fileUrl
-    : "about:blank";
-  const pageLabel = initialPage ?? 1;
+  const resolvedUrl = resolveBackendUrl(fileUrl);
+  const isLoadable = resolvedUrl !== null;
+
+  const [numPages, setNumPages] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(initialPage ?? 1);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // 모달이 새로 열릴 때 페이지/에러 상태 초기화
+  useEffect(() => {
+    if (open) {
+      setCurrentPage(initialPage ?? 1);
+      setNumPages(0);
+      setLoadError(null);
+    }
+  }, [open, initialPage, fileUrl]);
+
+  // file 객체는 매 렌더 새로 만들면 react-pdf가 매번 재요청한다 — useMemo로 안정화
+  const fileSource = useMemo(() => {
+    if (!resolvedUrl) return null;
+    const token = authManager.getToken();
+    return {
+      url: resolvedUrl,
+      httpHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+      withCredentials: false,
+    };
+  }, [resolvedUrl]);
+
+  const handleLoadSuccess = ({ numPages: n }: { numPages: number }) => {
+    setNumPages(n);
+    setLoadError(null);
+  };
+
+  const handleLoadError = (err: Error) => {
+    setLoadError(err.message || "문서를 불러오지 못했습니다.");
+  };
+
+  const goPrev = () => setCurrentPage((p) => Math.max(1, p - 1));
+  const goNext = () => setCurrentPage((p) => Math.min(numPages || p, p + 1));
 
   return (
     <AnimatePresence>
@@ -57,22 +105,30 @@ export function PDFViewer({
                 <p className="truncate text-[14px] font-semibold text-[#0a0a0a]">
                   {title}
                 </p>
-                <p className="text-[11px] text-[#717182]">{pageLabel}페이지</p>
+                <p className="text-[11px] text-[#717182]">
+                  {numPages > 0
+                    ? `${currentPage} / ${numPages}페이지`
+                    : `${currentPage}페이지`}
+                </p>
               </div>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  className="flex size-8 items-center justify-center rounded-lg text-[#717182] transition-colors hover:bg-[#f3f3f5]"
+                  onClick={goPrev}
+                  disabled={currentPage <= 1}
+                  className="flex size-8 items-center justify-center rounded-lg text-[#717182] transition-colors hover:bg-[#f3f3f5] disabled:opacity-30 disabled:hover:bg-transparent"
                   aria-label="이전 페이지"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <span className="px-1 text-[12px] text-[#4a5565]">
-                  p.{pageLabel}
+                  p.{currentPage}
                 </span>
                 <button
                   type="button"
-                  className="flex size-8 items-center justify-center rounded-lg text-[#717182] transition-colors hover:bg-[#f3f3f5]"
+                  onClick={goNext}
+                  disabled={numPages > 0 && currentPage >= numPages}
+                  className="flex size-8 items-center justify-center rounded-lg text-[#717182] transition-colors hover:bg-[#f3f3f5] disabled:opacity-30 disabled:hover:bg-transparent"
                   aria-label="다음 페이지"
                 >
                   <ChevronRight size={16} />
@@ -93,19 +149,13 @@ export function PDFViewer({
               <div className="size-2 animate-pulse rounded-full bg-[#004F9F]" />
               <p className="text-[12px] font-medium text-[#004F9F]">
                 AI 답변의 근거 구절 —{" "}
-                <span className="text-[#0a0a0a]">{pageLabel}페이지</span>
+                <span className="text-[#0a0a0a]">{initialPage ?? 1}페이지</span>
               </p>
             </div>
 
             {/* PDF body */}
-            <div className="min-h-0 flex-1 bg-[#F5F5F0]">
-              {isLoadable ? (
-                <iframe
-                  src={iframeSrc}
-                  className="size-full border-none"
-                  title={title}
-                />
-              ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[#F5F5F0]">
+              {!isLoadable ? (
                 <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
                   <FileText size={40} className="text-[#9ca3af]" />
                   <p className="text-[14px] font-medium text-[#0a0a0a]">
@@ -115,6 +165,35 @@ export function PDFViewer({
                     문서 파일을 다운로드/스트리밍할 API 엔드포인트가 추가되면
                     이 자리에서 PDF를 직접 확인할 수 있습니다.
                   </p>
+                </div>
+              ) : loadError ? (
+                <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                  <p className="text-[14px] font-medium text-[#0a0a0a]">
+                    문서를 불러올 수 없습니다
+                  </p>
+                  <p className="max-w-md text-[12px] text-[#717182]">{loadError}</p>
+                </div>
+              ) : (
+                <div className="flex justify-center py-6">
+                  <Document
+                    file={fileSource}
+                    onLoadSuccess={handleLoadSuccess}
+                    onLoadError={handleLoadError}
+                    loading={
+                      <div className="flex items-center gap-2 py-12 text-sm text-[#717182]">
+                        <Loader2 className="size-4 animate-spin" />
+                        문서를 불러오는 중입니다...
+                      </div>
+                    }
+                  >
+                    <Page
+                      pageNumber={currentPage}
+                      width={760}
+                      renderAnnotationLayer
+                      renderTextLayer
+                      className="shadow-lg"
+                    />
+                  </Document>
                 </div>
               )}
             </div>
