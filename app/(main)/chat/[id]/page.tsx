@@ -82,22 +82,32 @@ export default function ChatDetailPage({ params }: Props) {
   const { events, isStreaming, sendMessage, reset } = useSSEStream(id);
 
   // 세션 상세 로드 (히스토리 메시지)
+  // 초기 1회만 서버 응답으로 채운다. fetch가 늦게 resolve돼서 유저가 이미 새 메시지를 추가한
+  // 상태를 덮어쓰면 방금 나눈 대화가 통째로 사라진다 (StrictMode 중복 fetch에서 특히 잘 터짐).
   useEffect(() => {
     const numericId = Number(id);
     if (isNaN(numericId)) {
       setSessionLoaded(true);
       return;
     }
+    let cancelled = false;
     getSessionDetail(numericId)
       .then((res) => {
-        if (res.messages.length > 0) {
-          setMessages(res.messages.map(mapApiMessageToLocal));
-        }
+        if (cancelled) return;
+        if (res.messages.length === 0) return;
+        setMessages((prev) =>
+          prev.length === 0 ? res.messages.map(mapApiMessageToLocal) : prev
+        );
       })
       .catch(() => {
         // 세션 로드 실패 시 빈 메시지로 시작
       })
-      .finally(() => setSessionLoaded(true));
+      .finally(() => {
+        if (!cancelled) setSessionLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   // SSE 이벤트로부터 fallback/error 이벤트 추출
