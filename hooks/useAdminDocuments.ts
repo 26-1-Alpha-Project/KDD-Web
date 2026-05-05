@@ -5,13 +5,16 @@ import {
   getAdminDocuments,
   deleteDocument,
   reprocessDocument,
+  updateDocumentCategory,
 } from "@/lib/api/services/admin.service";
+import { ApiError, ERROR_MESSAGES } from "@/lib/api/errors";
 import type { AdminDocument } from "@/types/api/admin";
 
 export function useAdminDocuments() {
   const [documents, setDocuments] = useState<AdminDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const loadDocuments = useCallback(async () => {
     setIsLoading(true);
@@ -36,6 +39,27 @@ export function useAdminDocuments() {
       await deleteDocument(id);
     } catch {
       // 실패 시 목록 재로드
+      loadDocuments();
+    }
+  }, [loadDocuments]);
+
+  const handleUpdateCategory = useCallback(async (documentId: number, categoryId: number) => {
+    setUpdateError(null);
+    try {
+      const res = await updateDocumentCategory(documentId, categoryId);
+      setDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === documentId
+            ? { ...doc, categoryId: res.categoryId, categoryName: res.categoryName }
+            : doc
+        )
+      );
+    } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? (ERROR_MESSAGES[err.code] ?? err.message)
+          : "카테고리 변경에 실패했습니다.";
+      setUpdateError(msg);
       loadDocuments();
     }
   }, [loadDocuments]);
@@ -67,6 +91,8 @@ export function useAdminDocuments() {
     setSearchQuery,
     deleteDocument: handleDeleteDocument,
     reprocessDocument: handleReprocessDocument,
+    updateCategory: handleUpdateCategory,
+    updateError,
     isLoading,
     reload: loadDocuments,
   };

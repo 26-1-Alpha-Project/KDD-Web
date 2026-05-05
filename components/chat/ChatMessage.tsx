@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ThumbsUp, ThumbsDown, Copy, RotateCcw, ChevronUp, ChevronDown, FileText } from "lucide-react";
+import { Copy, ChevronUp, ChevronDown, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { ConfidenceBadge } from "./ConfidenceBadge";
@@ -84,6 +84,7 @@ export function ChatMessage({
                   <SourceCard
                     key={`${source.documentId}-${idx}`}
                     source={source}
+                    index={idx}
                     onOpenPDF={onOpenPDF}
                   />
                 ))}
@@ -109,24 +110,6 @@ export function ChatMessage({
               aria-label="복사"
             >
               <Copy className="size-3" />
-            </button>
-            <button
-              className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              aria-label="좋아요"
-            >
-              <ThumbsUp className="size-3" />
-            </button>
-            <button
-              className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              aria-label="싫어요"
-            >
-              <ThumbsDown className="size-3" />
-            </button>
-            <button
-              className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              aria-label="재생성"
-            >
-              <RotateCcw className="size-3" />
             </button>
           </div>
         )}

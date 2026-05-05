@@ -96,18 +96,19 @@ export async function updateSessionTitle(
   return apiClient.patch<ChatSessionUpdateResponse>(`/chat/sessions/${sessionId}`, { title });
 }
 
+// 추천 질문 — 백엔드(/chat/recommended-questions) 미구현 상태이므로 항상 mock 반환.
+// 백엔드 구현이 추가되면 USE_MOCK 분기를 제거하고 apiClient.get으로 대체한다.
+const RECOMMENDED_QUESTIONS_MOCK: RecommendedQuestionsResponse = {
+  questions: [
+    { questionId: 'rq-001', content: '이번 학기 수강신청 기간이 언제인가요?' },
+    { questionId: 'rq-002', content: '휴학 신청은 어떻게 하나요?' },
+    { questionId: 'rq-003', content: '성적우수 장학금 기준이 무엇인가요?' },
+    { questionId: 'rq-004', content: '복수전공 신청 조건이 어떻게 되나요?' },
+    { questionId: 'rq-005', content: '졸업 이수학점은 몇 학점인가요?' },
+  ],
+};
+
 export async function getRecommendedQuestions(): Promise<RecommendedQuestionsResponse> {
-  if (USE_MOCK) {
-    await delay(300);
-    return {
-      questions: [
-        { questionId: 'rq-001', content: '이번 학기 수강신청 기간이 언제인가요?' },
-        { questionId: 'rq-002', content: '휴학 신청은 어떻게 하나요?' },
-        { questionId: 'rq-003', content: '성적우수 장학금 기준이 무엇인가요?' },
-        { questionId: 'rq-004', content: '복수전공 신청 조건이 어떻게 되나요?' },
-        { questionId: 'rq-005', content: '졸업 이수학점은 몇 학점인가요?' },
-      ],
-    };
-  }
-  return apiClient.get<RecommendedQuestionsResponse>('/chat/recommended-questions');
+  await delay(300);
+  return RECOMMENDED_QUESTIONS_MOCK;
 }

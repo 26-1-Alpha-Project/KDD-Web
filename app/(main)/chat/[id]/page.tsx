@@ -1,19 +1,26 @@
 "use client";
 
 import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatWelcome } from "@/components/chat/ChatWelcome";
 import { ChatMessageList } from "@/components/chat/ChatMessageList";
 import { FallbackMessage } from "@/components/chat/FallbackMessage";
-import { PDFViewer } from "@/components/shared/PDFViewer";
 import { useChatContext } from "@/components/chat/ChatContext";
 import { useSSEStream } from "@/hooks/useSSEStream";
 import { getSessionDetail } from "@/lib/api/services/chat.service";
 import { getDocumentDetail } from "@/lib/api/services/document.service";
-import type { ChatMessage } from "@/types/chat";
+import type { ChatMessage, Source } from "@/types/chat";
 import type { SSEEvent, ChatMessageResponse } from "@/types/api/chat";
+
+// react-pdf는 DOMMatrix 같은 브라우저 전용 API를 모듈 평가 시점에 참조하므로
+// SSR을 비활성화한 동적 import로만 로드한다.
+const PDFViewer = dynamic(
+  () => import("@/components/shared/PDFViewer").then((m) => ({ default: m.PDFViewer })),
+  { ssr: false }
+);
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -36,11 +43,18 @@ function buildMessagesFromEvents(events: SSEEvent[]): Partial<ChatMessage> {
     } else if (event.type === "meta") {
       confidence = event.confidence;
       if (event.sources) {
-        sources = event.sources.map((s) => ({
-          documentId: s.documentId,
-          documentTitle: s.documentTitle,
-          page: s.page,
-        }));
+        const seen = new Map<string, Source>();
+        for (const s of event.sources) {
+          const key = `${s.documentId}-${s.page}`;
+          if (!seen.has(key)) {
+            seen.set(key, {
+              documentId: s.documentId,
+              documentTitle: s.documentTitle,
+              page: s.page,
+            });
+          }
+        }
+        sources = Array.from(seen.values());
       }
     } else if (event.type === "fallback") {
       suggestedQuestions = event.suggestedQuestions;
@@ -68,6 +82,7 @@ function mapApiMessageToLocal(msg: ChatMessageResponse): ChatMessage {
 export default function ChatDetailPage({ params }: Props) {
   const { id } = use(params);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { renameChat } = useChatContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionLoaded, setSessionLoaded] = useState(false);
@@ -143,7 +158,9 @@ export default function ChatDetailPage({ params }: Props) {
     if (!isNaN(numericId)) {
       getSessionDetail(numericId)
         .then((res) => renameChat(id, res.title))
-        .catch(() => {});
+        .catch(() => {
+          // 제목 동기화 실패는 UX에 영향 없음 — 사이드바 제목이 임시값으로 유지됨
+        });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStreaming]);
@@ -151,6 +168,13 @@ export default function ChatDetailPage({ params }: Props) {
   const handleSend = (content: string) => {
     const trimmed = content.trim();
     if (!trimmed) return;
+
+    // 첫 메시지 전송 시 제목 자동 갱신 (15자)
+    const isFirstMessage = messages.length === 0;
+    if (isFirstMessage) {
+      const newTitle = trimmed.slice(0, 15);
+      renameChat(id, newTitle);
+    }
 
     const userMessage: ChatMessage = {
       messageId: `${id}-${Date.now()}`,
@@ -165,6 +189,7 @@ export default function ChatDetailPage({ params }: Props) {
   const handleOpenPDF = async (documentId: number, page: number) => {
     try {
       const detail = await getDocumentDetail(documentId);
+      if (!detail.fileUrl) return;
       setPdfViewer({
         open: true,
         fileUrl: detail.fileUrl,
@@ -172,7 +197,7 @@ export default function ChatDetailPage({ params }: Props) {
         initialPage: page,
       });
     } catch {
-      // 실패 시 모달 안 띄움 (디자인 변경 없이 todos 범위만 충족)
+      // 실패 시 모달 안 띄움
     }
   };
 
@@ -184,9 +209,14 @@ export default function ChatDetailPage({ params }: Props) {
     if (!sessionLoaded) return;
     if (initialQueryHandled.current) return;
     const q = searchParams.get("q");
+    const autosend = searchParams.get("autosend");
     if (q && messages.length === 0) {
       initialQueryHandled.current = true;
       handleSend(q);
+      // autosend 파라미터가 있으면 URL에서 q/autosend 제거
+      if (autosend === "1") {
+        router.replace(`/chat/${id}`);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionLoaded]);

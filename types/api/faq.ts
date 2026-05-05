@@ -30,6 +30,7 @@ export interface FAQTopicsResponse {
 /** FAQ 목록 요청 파라미터 */
 export interface FAQListRequest {
   topic?: string;
+  sort?: "newest" | "popular";
   page?: number;
   pageSize?: number;
 }

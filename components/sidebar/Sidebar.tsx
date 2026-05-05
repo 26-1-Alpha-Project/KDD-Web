@@ -60,7 +60,13 @@ function SidebarContent({ onNavigate }: SidebarContentProps) {
     <>
       <aside className="flex h-full w-[260px] shrink-0 flex-col bg-white">
 
-        <div className="px-4 pt-6 pb-2">
+        {/* KDD 브랜드 영역 */}
+        <div className="flex flex-col px-4 pt-5 pb-3">
+          <span className="text-[17px] font-bold tracking-tight text-primary">KDD</span>
+          <span className="text-[10px] text-muted-foreground">Kookmin Digital Doc</span>
+        </div>
+
+        <div className="px-4 pt-1 pb-2">
           <button
             ref={triggerRef}
             onClick={handleSearchOpen}

@@ -5,8 +5,13 @@ import {
   getCategoryTree,
   getDocuments,
   getDocumentsByCategory,
+  getPopularDocuments,
 } from "@/lib/api/services/document.service";
-import type { CategoryTreeResponse, DocumentByCategoryResponse } from "@/types/api/document";
+import type {
+  CategoryTreeResponse,
+  DocumentByCategoryResponse,
+  PopularDocumentItem,
+} from "@/types/api/document";
 
 export interface DocumentItem {
   documentId: string;
@@ -25,16 +30,19 @@ export function useDocuments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<"latest" | "popular">("latest");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"list" | "tree">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "tree" | "popular">("popular");
   const [page, setPage] = useState(1);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
   const [categoryTree, setCategoryTree] = useState<CategoryNodeItem[]>([]);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
-  const [categoryDocuments, setCategoryDocuments] = useState<DocumentItem[]>([]);
+  // categoryId → DocumentItem[] 맵. expand된 카테고리마다 별도 보관
+  const [categoryDocumentsMap, setCategoryDocumentsMap] = useState<Map<string, DocumentItem[]>>(new Map());
+  const [popularDocuments, setPopularDocuments] = useState<PopularDocumentItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPopularLoading, setIsPopularLoading] = useState(false);
 
   // 카테고리 트리 변환 헬퍼
   const mapTree = useCallback((nodes: CategoryTreeResponse[]): CategoryNodeItem[] =>
@@ -50,7 +58,8 @@ export function useDocuments() {
       .then((res) => {
         setCategoryTree(mapTree(res.categories));
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[useDocuments] getCategoryTree 실패", err);
         setCategoryTree([]);
       });
   }, [mapTree]);
@@ -63,22 +72,24 @@ export function useDocuments() {
       categoryId: selectedCategoryId ? Number(selectedCategoryId) : undefined,
       keyword: searchQuery || undefined,
       sort,
-      page: page - 1, // 백엔드는 0-based
+      page: page - 1,
       pageSize: 20,
     })
       .then((res) => {
+        const data = Array.isArray(res?.data) ? res.data : [];
         setDocuments(
-          res.data.map((d) => ({
+          data.map((d) => ({
             documentId: String(d.documentId),
             title: d.title,
             category: d.category,
             updatedAt: d.updatedAt,
           }))
         );
-        setTotalCount(res.totalCount);
-        setTotalPages(res.totalPages);
+        setTotalCount(res?.totalCount ?? 0);
+        setTotalPages(res?.totalPages ?? 0);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[useDocuments] getDocuments 실패", err);
         setDocuments([]);
         setTotalCount(0);
         setTotalPages(0);
@@ -86,27 +97,45 @@ export function useDocuments() {
       .finally(() => setIsLoading(false));
   }, [activeTab, selectedCategoryId, searchQuery, sort, page]);
 
-  // 카테고리별 문서 로드 (tree 탭에서 선택 시)
+  // 인기 문서 로드 (popular 탭)
   useEffect(() => {
-    if (!selectedCategoryId || activeTab !== "tree") {
-      setCategoryDocuments([]);
-      return;
-    }
-    getDocumentsByCategory(Number(selectedCategoryId), { page: 0, pageSize: 50 })
+    if (activeTab !== "popular") return;
+    setIsPopularLoading(true);
+    getPopularDocuments()
       .then((res) => {
-        setCategoryDocuments(
-          res.data.map((d: DocumentByCategoryResponse) => ({
-            documentId: String(d.documentId),
-            title: d.title,
-            category: d.category,
-            updatedAt: d.updatedAt,
-          }))
-        );
+        setPopularDocuments(Array.isArray(res?.documents) ? res.documents : []);
       })
-      .catch(() => {
-        setCategoryDocuments([]);
+      .catch((err) => {
+        console.error("[useDocuments] getPopularDocuments 실패", err);
+        setPopularDocuments([]);
+      })
+      .finally(() => setIsPopularLoading(false));
+  }, [activeTab]);
+
+  // 카테고리별 문서 로드 (tree 탭에서 노드 expand 시)
+  const loadCategoryDocuments = useCallback(async (categoryId: string) => {
+    if (categoryDocumentsMap.has(categoryId)) return; // 이미 로드됨
+    try {
+      const res = await getDocumentsByCategory(Number(categoryId), { page: 0, pageSize: 50 });
+      const items: DocumentItem[] = res.data.map((d: DocumentByCategoryResponse) => ({
+        documentId: String(d.documentId),
+        title: d.title,
+        category: d.category,
+        updatedAt: d.updatedAt,
+      }));
+      setCategoryDocumentsMap((prev) => {
+        const next = new Map(prev);
+        next.set(categoryId, items);
+        return next;
       });
-  }, [selectedCategoryId, activeTab]);
+    } catch {
+      setCategoryDocumentsMap((prev) => {
+        const next = new Map(prev);
+        next.set(categoryId, []);
+        return next;
+      });
+    }
+  }, [categoryDocumentsMap]);
 
   const toggleNode = useCallback((categoryId: string) => {
     setExpandedNodes((prev) => {
@@ -115,10 +144,12 @@ export function useDocuments() {
         next.delete(categoryId);
       } else {
         next.add(categoryId);
+        // expand 시 해당 카테고리 문서 로드 트리거
+        loadCategoryDocuments(categoryId);
       }
       return next;
     });
-  }, []);
+  }, [loadCategoryDocuments]);
 
   const handleSetSelectedCategoryId = useCallback((id: string | null) => {
     setSelectedCategoryId(id);
@@ -149,10 +180,12 @@ export function useDocuments() {
     expandedNodes,
     toggleNode,
     documents,
-    categoryDocuments,
+    categoryDocumentsMap,
     categoryTree,
+    popularDocuments,
     totalCount,
     totalPages,
     isLoading,
+    isPopularLoading,
   };
 }

@@ -52,6 +52,7 @@ interface FAQItemProps {
   onToggle: () => void;
   feedback: "up" | "down" | null;
   onFeedback: (faqId: string, type: "up" | "down") => void;
+  onOpenPDF?: (documentId: number, page: number) => void;
 }
 
 export function FAQItem({
@@ -60,6 +61,7 @@ export function FAQItem({
   onToggle,
   feedback,
   onFeedback,
+  onOpenPDF,
 }: FAQItemProps) {
   const showNew = isNew(faq.createdAt);
 
@@ -112,8 +114,10 @@ export function FAQItem({
             <FAQAnswer
               answer={faq.answer}
               faqId={faq.faqId}
+              question={faq.question}
               feedback={feedback}
               onFeedback={onFeedback}
+              onOpenPDF={onOpenPDF}
               upCount={faq.helpful}
               downCount={faq.notHelpful}
               sources={faq.sources}

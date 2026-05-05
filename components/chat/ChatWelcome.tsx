@@ -2,15 +2,59 @@
 
 import Image from "next/image";
 import { TrendingUp, Sparkles } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { RecommendedQuestion } from "@/types/api/chat";
 
 interface ChatWelcomeProps {
   onSuggestionClick?: (text: string) => void;
   recommendations?: RecommendedQuestion[];
+  isLoading?: boolean;
 }
 
-export function ChatWelcome({ onSuggestionClick, recommendations }: ChatWelcomeProps) {
+const SKELETON_ITEMS = Array.from({ length: 5 });
+
+export function ChatWelcome({
+  onSuggestionClick,
+  recommendations,
+  isLoading,
+}: ChatWelcomeProps) {
   const questions = recommendations ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-8">
+        {/* Hero 스켈레톤 */}
+        <div className="flex flex-col items-center gap-3">
+          <Skeleton className="size-14 rounded-full" />
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+
+        {/* TOP 5 추천 질문 스켈레톤 */}
+        <div className="w-full max-w-sm">
+          <div className="mb-2 flex items-center gap-2 px-1">
+            <Skeleton className="size-4 rounded" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {SKELETON_ITEMS.map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2"
+              >
+                <Skeleton className="size-5 shrink-0 rounded" />
+                <Skeleton
+                  className="h-4 flex-1"
+                  style={{ maxWidth: `${80 - i * 8}%` }}
+                />
+                <Skeleton className="size-3 shrink-0 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-8">

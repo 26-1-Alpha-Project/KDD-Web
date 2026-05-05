@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Search,
@@ -14,25 +14,23 @@ import {
   Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  MOCK_DOCUMENTS,
-  MOCK_CATEGORY_TREE,
-  MOCK_POPULAR_DOCUMENTS,
-} from "@/constants/mock-documents";
-import type { CategoryNode, Document } from "@/types/api/document";
+import { useDocuments } from "@/hooks/useDocuments";
+import type { CategoryNodeItem, DocumentItem } from "@/hooks/useDocuments";
 
 const PAGE_SIZE = 10;
 
 // ──────────────────────────────────────────────
-// 카테고리 트리 노드
+// 카테고리 트리 노드 (인라인 문서 포함)
 // ──────────────────────────────────────────────
 
 interface CategoryTreeNodeProps {
-  node: CategoryNode;
+  node: CategoryNodeItem;
   expandedNodes: Set<string>;
   selectedCategoryId: string | null;
   onToggleNode: (id: string) => void;
   onSelectCategory: (id: string | null) => void;
+  onDocumentClick: (documentId: string) => void;
+  categoryDocumentsMap: Map<string, DocumentItem[]>;
   depth?: number;
 }
 
@@ -42,14 +40,20 @@ function CategoryTreeNode({
   selectedCategoryId,
   onToggleNode,
   onSelectCategory,
+  onDocumentClick,
+  categoryDocumentsMap,
   depth = 0,
 }: CategoryTreeNodeProps) {
   const hasChildren = node.children && node.children.length > 0;
   const isExpanded = expandedNodes.has(node.categoryId);
   const isSelected = selectedCategoryId === node.categoryId;
 
+  const inlineDocs = isExpanded && !hasChildren
+    ? (categoryDocumentsMap.get(node.categoryId) ?? null)
+    : null;
+
   const handleClick = () => {
-    if (hasChildren) onToggleNode(node.categoryId);
+    onToggleNode(node.categoryId);
     onSelectCategory(isSelected ? null : node.categoryId);
   };
 
@@ -59,40 +63,47 @@ function CategoryTreeNode({
         onClick={handleClick}
         style={{ paddingLeft: `${depth * 20 + 12}px` }}
         className={cn(
-          "flex w-full items-center gap-2 py-2.5 pr-3 text-sm transition-colors rounded-lg",
-          isSelected
-            ? "bg-accent text-primary font-medium"
-            : "text-foreground hover:bg-secondary/50"
+          "relative flex w-full items-center gap-2 rounded-lg py-2.5 pr-3 text-sm transition-all duration-150",
+          isExpanded
+            ? "bg-primary/8 text-primary font-medium shadow-sm"
+            : isSelected
+              ? "bg-accent text-primary font-medium"
+              : "text-foreground hover:bg-secondary/50"
         )}
+        aria-expanded={isExpanded}
       >
-        {hasChildren ? (
-          <ChevronRight
+        {/* 펼쳐진 노드 좌측 활성 인디케이터 바 */}
+        {isExpanded && (
+          <span
+            aria-hidden="true"
+            className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-primary"
+          />
+        )}
+        <ChevronRight
+          className={cn(
+            "size-4 shrink-0 transition-transform duration-200",
+            isExpanded ? "rotate-90 text-primary" : "text-muted-foreground"
+          )}
+        />
+        {isExpanded ? (
+          <FolderOpen className="size-4 shrink-0 text-primary" />
+        ) : (
+          <Folder
             className={cn(
-              "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-              isExpanded && "rotate-90"
+              "size-4 shrink-0",
+              isSelected ? "text-primary" : "text-muted-foreground"
             )}
           />
-        ) : (
-          <span className="size-4 shrink-0" />
-        )}
-        {hasChildren ? (
-          isExpanded ? (
-            <FolderOpen className="size-4 shrink-0 text-primary" />
-          ) : (
-            <Folder className="size-4 shrink-0 text-muted-foreground" />
-          )
-        ) : (
-          <Folder className="size-4 shrink-0 text-muted-foreground" />
         )}
         <span className="flex-1 text-left">{node.name}</span>
-        {node.documentCount !== undefined && (
-          <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-            {node.documentCount}
-          </span>
-        )}
       </button>
+
+      {/* 자식 노드: 좌측 가이드 라인 */}
       {hasChildren && isExpanded && (
-        <div>
+        <div
+          className="relative ml-3 border-l border-border/60 pl-1"
+          style={{ marginLeft: `${depth * 20 + 18}px` }}
+        >
           {node.children!.map((child) => (
             <CategoryTreeNode
               key={child.categoryId}
@@ -101,9 +112,39 @@ function CategoryTreeNode({
               selectedCategoryId={selectedCategoryId}
               onToggleNode={onToggleNode}
               onSelectCategory={onSelectCategory}
-              depth={depth + 1}
+              onDocumentClick={onDocumentClick}
+              categoryDocumentsMap={categoryDocumentsMap}
+              depth={0}
             />
           ))}
+        </div>
+      )}
+
+      {/* 리프 노드 인라인 문서 목록 */}
+      {inlineDocs !== null && (
+        <div
+          style={{ paddingLeft: `${depth * 20 + 32}px` }}
+          className="border-l border-border/40 ml-3 pb-1"
+        >
+          {inlineDocs.length === 0 ? (
+            <p className="py-2 text-xs text-muted-foreground">
+              이 카테고리에 문서가 없습니다
+            </p>
+          ) : (
+            inlineDocs.map((doc) => (
+              <button
+                key={doc.documentId}
+                onClick={() => onDocumentClick(doc.documentId)}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-secondary/50"
+              >
+                <FileText className="size-3.5 shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate text-foreground">{doc.title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {doc.updatedAt}
+                </span>
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>
@@ -111,11 +152,11 @@ function CategoryTreeNode({
 }
 
 // ──────────────────────────────────────────────
-// 문서 행 (renderDocRow 패턴)
+// 문서 행
 // ──────────────────────────────────────────────
 
 interface DocRowProps {
-  document: Document;
+  document: { documentId: string; title: string; category: string; updatedAt: string; viewCount?: number };
   onClick: () => void;
 }
 
@@ -139,15 +180,7 @@ function DocRow({ document, onClick }: DocRowProps) {
               {document.category}
             </span>
           )}
-          {document.department && <span>{document.department}</span>}
-          {document.department && document.updatedAt && <span>·</span>}
           <span>{document.updatedAt}</span>
-          {document.fileSize && (
-            <>
-              <span>·</span>
-              <span>{document.fileSize}</span>
-            </>
-          )}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
@@ -175,112 +208,56 @@ function DocRow({ document, onClick }: DocRowProps) {
 
 export default function ResourcesPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"tree" | "list">("tree");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
 
-  // 카테고리 탐색 탭 상태
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const {
+    searchQuery,
+    setSearchQuery,
+    sort,
+    setSort,
+    selectedCategoryId,
+    setSelectedCategoryId,
+    activeTab,
+    setActiveTab,
+    page,
+    setPage,
+    expandedNodes,
+    toggleNode,
+    documents,
+    categoryDocumentsMap,
+    categoryTree,
+    popularDocuments,
+    totalCount,
+    totalPages,
+    isLoading,
+    isPopularLoading,
+  } = useDocuments();
 
-  // 문서 목록 탭 상태
-  const [searchQuery, setSearchQuery] = useState("");
-  const [listCategory, setListCategory] = useState<string | null>(null);
-  const [sort, setSort] = useState<"latest" | "popular">("latest");
-  const [page, setPage] = useState(1);
-
-  const handleDocumentClick = (documentId: string) => {
-    router.push(`/resources/${documentId}`);
-  };
-
-  const toggleNode = useCallback((categoryId: string) => {
-    setExpandedNodes((prev) => {
-      const next = new Set(prev);
-      if (next.has(categoryId)) {
-        next.delete(categoryId);
-      } else {
-        next.add(categoryId);
-      }
-      return next;
-    });
+  // tabParam으로 초기 탭 설정 (마운트 1회)
+  useEffect(() => {
+    if (tabParam === "list") setActiveTab("list");
+    else if (tabParam === "popular") setActiveTab("popular");
+    else if (tabParam === "tree") setActiveTab("tree");
+    // setActiveTab은 안정적인 콜백이므로 deps 생략 가능
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleDocumentClick = useCallback((documentId: string) => {
+    router.push(`/resources/${documentId}`);
+  }, [router]);
 
   const handleSelectCategory = useCallback((id: string | null) => {
     setSelectedCategoryId(id);
-  }, []);
+  }, [setSelectedCategoryId]);
 
-  // 선택된 카테고리 이름 조회
-  const selectedCategoryName = useMemo(() => {
-    if (!selectedCategoryId) return null;
-    for (const node of MOCK_CATEGORY_TREE) {
-      if (node.categoryId === selectedCategoryId) return node.name;
-      if (node.children) {
-        for (const child of node.children) {
-          if (child.categoryId === selectedCategoryId) return child.name;
-        }
-      }
-    }
-    return null;
-  }, [selectedCategoryId]);
-
-  // 선택된 카테고리 문서 목록
-  const selectedCategoryDocuments = useMemo<Document[]>(() => {
-    if (!selectedCategoryName) return [];
-    return MOCK_DOCUMENTS.filter(
-      (doc) =>
-        doc.category === selectedCategoryName ||
-        doc.categoryPath?.includes(selectedCategoryName)
-    );
-  }, [selectedCategoryName]);
-
-  // 문서 목록 탭 필터링
   const rootCategoryNames = useMemo(
-    () => MOCK_CATEGORY_TREE.map((n) => n.name),
-    []
+    () => categoryTree.map((n) => n.name),
+    [categoryTree]
   );
 
-  const listFilteredDocuments = useMemo<Document[]>(() => {
-    let result = MOCK_DOCUMENTS.filter((doc) => {
-      const matchesCategory = !listCategory || doc.category === listCategory;
-      const matchesSearch =
-        searchQuery.trim() === "" ||
-        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doc.category.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-
-    if (sort === "latest") {
-      result = [...result].sort(
-        (a, b) =>
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
-    } else {
-      result = [...result].sort(
-        (a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0)
-      );
-    }
-
-    return result;
-  }, [searchQuery, listCategory, sort]);
-
-  const totalPages = Math.ceil(listFilteredDocuments.length / PAGE_SIZE);
-  const pagedDocuments = listFilteredDocuments.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
-  );
-
-  const handleListCategoryChange = (cat: string | null) => {
-    setListCategory(cat);
-    setPage(1);
-  };
-
-  const handleSortChange = (value: "latest" | "popular") => {
-    setSort(value);
-    setPage(1);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setPage(1);
-  };
+  const totalPagesCalc = Math.max(totalPages, Math.ceil(documents.length / PAGE_SIZE));
+  const pagedDocuments = documents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="flex h-dvh flex-col bg-background">
@@ -298,103 +275,51 @@ export default function ResourcesPage() {
 
       {/* 탭 바 */}
       <div className="flex shrink-0 border-b border-border bg-background px-4">
-        <button
-          className={cn(
-            "px-3 py-3 text-sm font-medium transition-colors",
-            activeTab === "tree"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setActiveTab("tree")}
-        >
-          카테고리 탐색
-        </button>
-        <button
-          className={cn(
-            "px-3 py-3 text-sm font-medium transition-colors",
-            activeTab === "list"
-              ? "border-b-2 border-primary text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setActiveTab("list")}
-        >
-          문서 목록
-        </button>
+        {(["popular", "tree", "list"] as const).map((tab) => {
+          const labels = { popular: "인기 문서", tree: "카테고리 탐색", list: "문서 목록" };
+          return (
+            <button
+              key={tab}
+              className={cn(
+                "px-3 py-3 text-sm font-medium transition-colors",
+                activeTab === tab
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setActiveTab(tab)}
+            >
+              {labels[tab]}
+            </button>
+          );
+        })}
       </div>
 
       {/* 콘텐츠 영역 */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-4xl px-4 py-4">
+
           {/* ── 카테고리 탐색 탭 ── */}
           {activeTab === "tree" && (
             <div>
               <p className="mb-4 text-sm text-muted-foreground">
                 카테고리를 선택하면 해당 카테고리에 속한 문서를 확인할 수 있습니다.
               </p>
-
-              {/* 카테고리 트리 */}
-              <div className="flex flex-col gap-0.5">
-                {MOCK_CATEGORY_TREE.map((node) => (
-                  <CategoryTreeNode
-                    key={node.categoryId}
-                    node={node}
-                    expandedNodes={expandedNodes}
-                    selectedCategoryId={selectedCategoryId}
-                    onToggleNode={toggleNode}
-                    onSelectCategory={handleSelectCategory}
-                  />
-                ))}
-              </div>
-
-              {/* 선택된 카테고리 문서 목록 */}
-              {selectedCategoryId && selectedCategoryName ? (
-                <div className="mt-6 rounded-xl border border-border">
-                  <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-                    <span className="text-sm font-medium text-foreground">
-                      {selectedCategoryName}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({selectedCategoryDocuments.length}개)
-                    </span>
-                  </div>
-                  {selectedCategoryDocuments.length === 0 ? (
-                    <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-                      이 카테고리에 문서가 없습니다
-                    </div>
-                  ) : (
-                    <div>
-                      {selectedCategoryDocuments.map((doc) => (
-                        <DocRow
-                          key={doc.documentId}
-                          document={doc}
-                          onClick={() => handleDocumentClick(doc.documentId)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {categoryTree.length === 0 ? (
+                <p className="text-sm text-muted-foreground">카테고리를 불러오는 중...</p>
               ) : (
-                /* 인기 문서 (카테고리 미선택 시) */
-                <div className="mt-6 rounded-xl border border-border">
-                  <div className="flex items-center gap-2 rounded-t-xl bg-popular-bg px-4 py-3 border-b border-border">
-                    <Flame className="size-4 text-popular-icon" />
-                    <span className="text-sm font-medium text-popular-fg">인기 문서</span>
-                  </div>
-                  <div>
-                    {MOCK_POPULAR_DOCUMENTS.map((pop) => {
-                      const doc = MOCK_DOCUMENTS.find(
-                        (d) => d.documentId === pop.documentId
-                      );
-                      if (!doc) return null;
-                      return (
-                        <DocRow
-                          key={doc.documentId}
-                          document={doc}
-                          onClick={() => handleDocumentClick(doc.documentId)}
-                        />
-                      );
-                    })}
-                  </div>
+                <div className="flex flex-col gap-0.5">
+                  {categoryTree.map((node) => (
+                    <CategoryTreeNode
+                      key={node.categoryId}
+                      node={node}
+                      expandedNodes={expandedNodes}
+                      selectedCategoryId={selectedCategoryId}
+                      onToggleNode={toggleNode}
+                      onSelectCategory={handleSelectCategory}
+                      onDocumentClick={handleDocumentClick}
+                      categoryDocumentsMap={categoryDocumentsMap}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -408,7 +333,7 @@ export default function ResourcesPage() {
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="문서 제목으로 검색..."
                   className="w-full rounded-lg bg-muted py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
@@ -420,34 +345,35 @@ export default function ResourcesPage() {
                   <button
                     className={cn(
                       "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                      !listCategory
+                      !selectedCategoryId
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-secondary"
                     )}
-                    onClick={() => handleListCategoryChange(null)}
+                    onClick={() => setSelectedCategoryId(null)}
                   >
                     전체
                   </button>
-                  {rootCategoryNames.map((cat) => (
-                    <button
-                      key={cat}
-                      className={cn(
-                        "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                        listCategory === cat
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-secondary"
-                      )}
-                      onClick={() => handleListCategoryChange(cat)}
-                    >
-                      {cat}
-                    </button>
-                  ))}
+                  {rootCategoryNames.map((cat) => {
+                    const node = categoryTree.find((n) => n.name === cat);
+                    return (
+                      <button
+                        key={cat}
+                        className={cn(
+                          "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                          selectedCategoryId === node?.categoryId
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-secondary"
+                        )}
+                        onClick={() => setSelectedCategoryId(node?.categoryId ?? null)}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
                 </div>
                 <select
                   value={sort}
-                  onChange={(e) =>
-                    handleSortChange(e.target.value as "latest" | "popular")
-                  }
+                  onChange={(e) => setSort(e.target.value as "latest" | "popular")}
                   className="shrink-0 rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
                   <option value="latest">최신순</option>
@@ -455,13 +381,15 @@ export default function ResourcesPage() {
                 </select>
               </div>
 
-              {/* 문서 수 */}
               <p className="mb-2 text-xs text-muted-foreground">
-                총 {listFilteredDocuments.length}개 문서
+                총 {totalCount || documents.length}개 문서
               </p>
 
-              {/* 문서 리스트 */}
-              {pagedDocuments.length === 0 ? (
+              {isLoading ? (
+                <div className="flex items-center justify-center rounded-xl border border-border py-16 text-sm text-muted-foreground">
+                  불러오는 중...
+                </div>
+              ) : pagedDocuments.length === 0 ? (
                 <div className="flex items-center justify-center rounded-xl border border-border py-16 text-sm text-muted-foreground">
                   검색 결과가 없습니다
                 </div>
@@ -478,35 +406,33 @@ export default function ResourcesPage() {
               )}
 
               {/* 페이지네이션 */}
-              {totalPages > 1 && (
+              {totalPagesCalc > 1 && (
                 <div className="mt-4 flex items-center justify-center gap-1">
                   <button
                     className="rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1}
                   >
                     이전
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (p) => (
-                      <button
-                        key={p}
-                        className={cn(
-                          "size-7 rounded text-xs transition-colors",
-                          p === page
-                            ? "bg-primary text-primary-foreground font-medium"
-                            : "text-muted-foreground hover:bg-secondary"
-                        )}
-                        onClick={() => setPage(p)}
-                      >
-                        {p}
-                      </button>
-                    )
-                  )}
+                  {Array.from({ length: totalPagesCalc }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      className={cn(
+                        "size-7 rounded text-xs transition-colors",
+                        p === page
+                          ? "bg-primary text-primary-foreground font-medium"
+                          : "text-muted-foreground hover:bg-secondary"
+                      )}
+                      onClick={() => setPage(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
                   <button
                     className="rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
+                    onClick={() => setPage(Math.min(totalPagesCalc, page + 1))}
+                    disabled={page === totalPagesCalc}
                   >
                     다음
                   </button>
@@ -514,6 +440,44 @@ export default function ResourcesPage() {
               )}
             </div>
           )}
+
+          {/* ── 인기 문서 탭 ── */}
+          {activeTab === "popular" && (
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <Flame className="size-4 text-popular-icon" />
+                <span className="text-sm font-semibold text-foreground">
+                  인기 문서
+                </span>
+              </div>
+              {isPopularLoading ? (
+                <div className="flex items-center justify-center rounded-xl border border-border py-16 text-sm text-muted-foreground">
+                  불러오는 중...
+                </div>
+              ) : popularDocuments.length === 0 ? (
+                <div className="flex items-center justify-center rounded-xl border border-border py-16 text-sm text-muted-foreground">
+                  인기 문서가 없습니다
+                </div>
+              ) : (
+                <div className="rounded-xl border border-border">
+                  {popularDocuments.map((doc) => (
+                    <DocRow
+                      key={doc.documentId}
+                      document={{
+                        documentId: String(doc.documentId),
+                        title: doc.title,
+                        category: doc.category,
+                        updatedAt: doc.updatedAt,
+                        viewCount: doc.viewCount,
+                      }}
+                      onClick={() => handleDocumentClick(String(doc.documentId))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
     </div>

@@ -64,13 +64,14 @@ export interface DocumentDetailResponse {
 
 /**
  * 백엔드 DocumentDetailPublicResponse 대응 (일반 사용자용 GET /documents/{id})
- * - fileUrl: 백엔드가 내려주는 storageKey 기반 URL. 프론트가 경로를 조립하지 않고 그대로 사용한다.
+ * - fileUrl: storageKey가 있으면 "/documents/{id}/file", 없으면 null.
+ *   프론트가 경로를 조립하지 않고 응답값 그대로 사용한다.
  */
 export interface DocumentDetailPublicResponse {
   documentId: number;
   title: string;
   category: string;
-  fileUrl: string;
+  fileUrl: string | null;
   viewCount: number;
   createdAt: string;
   updatedAt: string;

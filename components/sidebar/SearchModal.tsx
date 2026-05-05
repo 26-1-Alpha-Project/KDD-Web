@@ -123,16 +123,18 @@ export function SearchModal({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.2 }}
           >
-            <button
-              onClick={() => {
-                router.push("/chat");
-                handleClose();
-              }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-            >
-              <SquarePen className="size-4" />
-              새 채팅
-            </button>
+            {query.trim() === "" && (
+              <button
+                onClick={() => {
+                  router.push("/chat");
+                  handleClose();
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+              >
+                <SquarePen className="size-4" />
+                새 채팅
+              </button>
+            )}
 
             {filtered.length > 0 && (
               <>

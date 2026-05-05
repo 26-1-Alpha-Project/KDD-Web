@@ -11,6 +11,7 @@ import type { FAQItem, FAQTopic } from "@/types/api/faq";
 export function useFAQ() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("all");
+  const [sort, setSort] = useState<"newest" | "popular">("newest");
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
   const [feedbacks, setFeedbacks] = useState<Record<string, "up" | "down" | null>>({});
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
@@ -29,11 +30,12 @@ export function useFAQ() {
     setIsLoading(true);
     getFAQList({
       topic: selectedTopic !== "all" ? selectedTopic : undefined,
+      sort,
     })
       .then((res) => setFaqs(res.data))
       .catch(() => setFaqs([]))
       .finally(() => setIsLoading(false));
-  }, [selectedTopic]);
+  }, [selectedTopic, sort]);
 
   const filteredFAQs: FAQItem[] = faqs.filter((faq) => {
     if (!searchQuery.trim()) return true;
@@ -72,6 +74,8 @@ export function useFAQ() {
     setSearchQuery,
     selectedTopic,
     setSelectedTopic,
+    sort,
+    setSort,
     openFaqId,
     toggleFaq,
     feedbacks,
