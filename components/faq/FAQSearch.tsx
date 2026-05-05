@@ -8,13 +8,13 @@ interface FAQSearchProps {
 
 export function FAQSearch({ value, onChange }: FAQSearchProps) {
   return (
-    <div className="relative mb-4">
+    <div className="relative">
       <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="질문 검색..."
-        className="pl-9"
+        className="h-10 pl-9"
       />
     </div>
   );

@@ -140,7 +140,16 @@ function LoginPageContent() {
     });
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-    const popup = window.open(authUrl, "_blank", "popup,width=500,height=600");
+    // 팝업을 화면 가운데에 배치 (멀티 모니터 환경에서도 부모 창 기준)
+    const popupWidth = 500;
+    const popupHeight = 600;
+    const left = Math.round(window.screenX + (window.outerWidth - popupWidth) / 2);
+    const top = Math.round(window.screenY + (window.outerHeight - popupHeight) / 2);
+    const popup = window.open(
+      authUrl,
+      "_blank",
+      `popup,width=${popupWidth},height=${popupHeight},left=${left},top=${top}`
+    );
 
     if (!popup) {
       // 팝업 차단된 경우: 전체 페이지 리다이렉트로 fallback
@@ -209,8 +218,11 @@ function LoginPageContent() {
     return (
       <div className="min-h-dvh bg-background">
         <div className="flex flex-col items-center justify-between mx-auto max-w-100 min-h-dvh px-5 py-8">
-          {/* Top spacer */}
-          <div className="h-4 w-full shrink-0" />
+          {/* KDD 브랜드 */}
+          <div className="flex flex-col items-center shrink-0">
+            <span className="text-2xl font-bold tracking-tight text-primary">KDD</span>
+            <span className="text-xs text-muted-foreground">Kookmin Digital Doc</span>
+          </div>
 
           {/* Slide content */}
           <div className="flex flex-1 items-center justify-center w-full">

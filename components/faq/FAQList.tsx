@@ -7,6 +7,7 @@ interface FAQListProps {
   onToggleFaq: (faqId: string) => void;
   feedbacks: Record<string, "up" | "down" | null>;
   onFeedback: (faqId: string, type: "up" | "down") => void;
+  onOpenPDF?: (documentId: number, page: number) => void;
 }
 
 export function FAQList({
@@ -15,6 +16,7 @@ export function FAQList({
   onToggleFaq,
   feedbacks,
   onFeedback,
+  onOpenPDF,
 }: FAQListProps) {
   if (faqs.length === 0) {
     return (
@@ -34,6 +36,7 @@ export function FAQList({
           onToggle={() => onToggleFaq(faq.faqId)}
           feedback={feedbacks[faq.faqId] ?? null}
           onFeedback={onFeedback}
+          onOpenPDF={onOpenPDF}
         />
       ))}
     </div>

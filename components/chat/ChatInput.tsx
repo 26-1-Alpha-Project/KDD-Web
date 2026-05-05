@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type KeyboardEvent, type MouseEvent } from "react";
+import { useState, useRef, useCallback, useEffect, type KeyboardEvent, type MouseEvent } from "react";
 import { ArrowUp, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,22 +8,39 @@ interface ChatInputProps {
   onSend?: (message: string) => void;
   disabled?: boolean;
   className?: string;
+  /** 마운트 시 입력창에 채워넣을 초기 텍스트 (자동 전송 안 함) */
+  initialValue?: string;
 }
 
-export function ChatInput({ onSend, disabled, className }: ChatInputProps) {
-  const [value, setValue] = useState("");
+export function ChatInput({ onSend, disabled, className, initialValue }: ChatInputProps) {
+  const [value, setValue] = useState(initialValue ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isSendingRef = useRef(false);
 
-  const canSend = value.trim().length > 0 && !disabled;
+  // initialValue가 비동기로 결정되는 경우를 위한 동기화 (1회만)
+  const initialValueApplied = useRef(false);
+  useEffect(() => {
+    if (initialValue && !initialValueApplied.current) {
+      initialValueApplied.current = true;
+      setValue(initialValue);
+    }
+  }, [initialValue]);
 
-  const handleSend = () => {
-    if (!canSend) return;
+  const canSend = value.trim().length > 0 && !disabled && !isSendingRef.current;
+
+  const handleSend = useCallback(() => {
+    if (!value.trim() || disabled || isSendingRef.current) return;
+    isSendingRef.current = true;
     onSend?.(value.trim());
     setValue("");
     if (textareaRef.current) {
+      textareaRef.current.value = "";
       textareaRef.current.style.height = "auto";
     }
-  };
+    setTimeout(() => {
+      isSendingRef.current = false;
+    }, 100);
+  }, [value, disabled, onSend]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {

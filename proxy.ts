@@ -15,6 +15,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // 백엔드 refreshToken 쿠키는 Path=/auth로 설정되어 /chat 등 다른 경로에서는
+  // 브라우저가 전송하지 않는다. 따라서 미들웨어 가드는 user_role 쿠키만으로 판단.
   const userRole = request.cookies.get("user_role")?.value;
   const profileCompleted = request.cookies.get("profile_completed")?.value;
 

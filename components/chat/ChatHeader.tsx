@@ -15,7 +15,7 @@ export function ChatHeader() {
         <Menu className="size-5" />
       </button>
       <h2 className="flex-1 text-lg font-semibold text-foreground md:text-left text-center">
-        Kookmin AI
+        KDD
       </h2>
       <div className="size-9 md:hidden" />
     </header>

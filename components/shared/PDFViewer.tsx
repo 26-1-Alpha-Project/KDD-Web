@@ -154,7 +154,7 @@ export function PDFViewer({
             </div>
 
             {/* PDF body */}
-            <div className="min-h-0 flex-1 overflow-y-auto bg-[#F5F5F0]">
+            <div className="relative min-h-0 flex-1 overflow-y-auto bg-[#F5F5F0]">
               {!isLoadable ? (
                 <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
                   <FileText size={40} className="text-[#9ca3af]" />
@@ -195,6 +195,30 @@ export function PDFViewer({
                     />
                   </Document>
                 </div>
+              )}
+
+              {/* 좌/우 큰 화살표 버튼 */}
+              {numPages > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={goPrev}
+                    disabled={currentPage <= 1}
+                    className="absolute left-4 top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label="이전 페이지"
+                  >
+                    <ChevronLeft className="size-8" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={currentPage >= numPages}
+                    className="absolute right-4 top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition-colors hover:bg-black/60 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label="다음 페이지"
+                  >
+                    <ChevronRight className="size-8" />
+                  </button>
+                </>
               )}
             </div>
           </motion.div>

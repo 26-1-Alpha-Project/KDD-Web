@@ -90,75 +90,48 @@ export async function updateDocumentCategory(
   return apiClient.patch<DocumentResponse>(`/admin/documents/${fileId}/category`, { categoryId });
 }
 
+// ── 백엔드 미구현 엔드포인트 (항상 mock 반환) ─────────────────────
+// 아래 함수들은 백엔드(/admin/statistics, /admin/faqs/*)에 컨트롤러가 없어
+// USE_MOCK 값과 무관하게 mock 데이터를 반환한다.
+// 백엔드 구현 후 USE_MOCK 분기를 복원하고 apiClient 호출을 활성화한다.
+
 export async function getStatistics(): Promise<AdminStatisticsResponse> {
-  if (USE_MOCK) {
-    await delay(400);
-    return MOCK_ADMIN_STATISTICS;
-  }
-  return apiClient.get<AdminStatisticsResponse>('/admin/statistics');
+  await delay(400);
+  return MOCK_ADMIN_STATISTICS;
 }
 
 export async function getFAQCandidates(
   params?: FAQCandidateListRequest
 ): Promise<FAQCandidateListResponse> {
-  if (USE_MOCK) {
-    await delay(400);
-    return {
-      data: MOCK_FAQ_CANDIDATES,
-      totalCount: MOCK_FAQ_CANDIDATES.length,
-      page: params?.page ?? 1,
-      pageSize: params?.pageSize ?? 10,
-      totalPages: Math.ceil(MOCK_FAQ_CANDIDATES.length / (params?.pageSize ?? 10)),
-    };
-  }
-  return apiClient.get<FAQCandidateListResponse>('/admin/faqs/candidates', {
-    params: {
-      page: params?.page,
-      pageSize: params?.pageSize,
-    },
-  });
+  await delay(400);
+  return {
+    data: MOCK_FAQ_CANDIDATES,
+    totalCount: MOCK_FAQ_CANDIDATES.length,
+    page: params?.page ?? 1,
+    pageSize: params?.pageSize ?? 10,
+    totalPages: Math.ceil(MOCK_FAQ_CANDIDATES.length / (params?.pageSize ?? 10)),
+  };
 }
 
-export async function approveCandidate(candidateId: string): Promise<void> {
-  if (USE_MOCK) {
-    await delay(300);
-    return;
-  }
-  await apiClient.post<void>(`/admin/faqs/candidates/${candidateId}/approve`);
+export async function approveCandidate(_candidateId: string): Promise<void> {
+  await delay(300);
 }
 
-export async function rejectCandidate(candidateId: string): Promise<void> {
-  if (USE_MOCK) {
-    await delay(300);
-    return;
-  }
-  await apiClient.post<void>(`/admin/faqs/candidates/${candidateId}/reject`);
+export async function rejectCandidate(_candidateId: string): Promise<void> {
+  await delay(300);
 }
 
 export async function getAdminFAQList(params?: FAQListRequest): Promise<FAQListResponse> {
-  if (USE_MOCK) {
-    await delay(400);
-    return {
-      data: MOCK_FAQ_ITEMS,
-      totalCount: MOCK_FAQ_ITEMS.length,
-      page: params?.page ?? 1,
-      pageSize: params?.pageSize ?? 10,
-      totalPages: Math.ceil(MOCK_FAQ_ITEMS.length / (params?.pageSize ?? 10)),
-    };
-  }
-  return apiClient.get<FAQListResponse>('/admin/faqs', {
-    params: {
-      topic: params?.topic,
-      page: params?.page,
-      pageSize: params?.pageSize,
-    },
-  });
+  await delay(400);
+  return {
+    data: MOCK_FAQ_ITEMS,
+    totalCount: MOCK_FAQ_ITEMS.length,
+    page: params?.page ?? 1,
+    pageSize: params?.pageSize ?? 10,
+    totalPages: Math.ceil(MOCK_FAQ_ITEMS.length / (params?.pageSize ?? 10)),
+  };
 }
 
-export async function deleteAdminFAQ(faqId: string): Promise<void> {
-  if (USE_MOCK) {
-    await delay(300);
-    return;
-  }
-  await apiClient.delete<void>(`/admin/faqs/${faqId}`);
+export async function deleteAdminFAQ(_faqId: string): Promise<void> {
+  await delay(300);
 }
