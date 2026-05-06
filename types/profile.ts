@@ -10,16 +10,15 @@ export type ReturnPlan =
 
 export type Department = "software" | "ai";
 
-export type Grade = "1" | "2" | "3" | "4" | "5_or_above";
+export type Grade = "1" | "2" | "3" | "4";
 
 export type StaffDepartment =
+  | "student_support"
   | "academic_affairs"
-  | "student_affairs"
+  | "admissions"
+  | "industry_cooperation"
+  | "international_office"
   | "general_affairs"
-  | "planning"
-  | "sw_college"
-  | "ai_college"
-  | "library"
   | "other";
 
 /** Step 1: Basic info fields */

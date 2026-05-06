@@ -14,7 +14,7 @@ import StaffInfoStep from "@/components/profile/StaffInfoStep";
 import { authManager } from "@/lib/api/auth";
 import { googleLogin } from "@/lib/api/services/auth.service";
 import { getMyInfo, createProfile } from "@/lib/api/services/user.service";
-import { ApiError, ERROR_MESSAGES } from "@/lib/api/errors";
+import { ApiError, ERROR_CODES, ERROR_MESSAGES } from "@/lib/api/errors";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 const GOOGLE_REDIRECT_URI =
@@ -85,6 +85,41 @@ function LoginPageContent() {
     return () => clearInterval(timer);
   }, [phase]);
 
+  useEffect(() => {
+    if (phase !== "profile") return;
+
+    let cancelled = false;
+
+    const redirectCompletedProfile = async () => {
+      try {
+        if (!authManager.isAuthenticated()) {
+          await authManager.refreshAccessToken();
+        }
+
+        const me = await getMyInfo();
+        if (cancelled) return;
+
+        setAuthCookies(me.role, me.profileCompleted);
+
+        if (me.profileCompleted) {
+          router.replace("/chat");
+          return;
+        }
+
+        updateBasicInfo("name", me.name ?? "");
+        updateBasicInfo("email", me.email ?? "");
+      } catch {
+        // Not logged in yet. Keep the profile form available for the mock login path.
+      }
+    };
+
+    redirectCompletedProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, router, updateBasicInfo]);
+
   // 팝업에서 postMessage로 전달되는 OAuth code 수신
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
@@ -101,7 +136,7 @@ function LoginPageContent() {
         const me = await getMyInfo();
         setAuthCookies(me.role, me.profileCompleted);
 
-        if (!response.isProfileCompleted) {
+        if (!me.profileCompleted) {
           updateBasicInfo("name", me.name ?? "");
           updateBasicInfo("email", me.email ?? "");
           setPhase("profile");
@@ -121,7 +156,7 @@ function LoginPageContent() {
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [router]);
+  }, [router, updateBasicInfo]);
 
   const handleGoogleLogin = () => {
     if (!GOOGLE_CLIENT_ID) {
@@ -171,11 +206,22 @@ function LoginPageContent() {
     setLoginError(null);
     try {
       const profileData = buildProfileData();
-      await createProfile(profileData);
-      setAuthCookies(null, true);
-      router.push("/chat");
+      const me = await createProfile(profileData);
+      setAuthCookies(me.role, me.profileCompleted);
+      router.replace("/chat");
     } catch (error) {
       if (error instanceof ApiError) {
+        if (error.code === ERROR_CODES.PROFILE_ALREADY_COMPLETED) {
+          try {
+            const me = await getMyInfo();
+            setAuthCookies(me.role, me.profileCompleted);
+            router.replace("/chat");
+            return;
+          } catch {
+            setLoginError(ERROR_MESSAGES[error.code] ?? error.message);
+            return;
+          }
+        }
         setLoginError(ERROR_MESSAGES[error.code] ?? error.message);
       } else {
         setLoginError("프로필 저장 중 오류가 발생했습니다.");

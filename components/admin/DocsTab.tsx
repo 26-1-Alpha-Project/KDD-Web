@@ -169,7 +169,7 @@ function UploadModal({ onClose, onUploaded }: UploadModalProps) {
     const data = {
       title: uploadFile.name.replace(/\.pdf$/i, ""),
       categoryId: uploadCategoryId,
-      source: "SW",
+      source: "sw",
     };
     formData.append(
       "data",
