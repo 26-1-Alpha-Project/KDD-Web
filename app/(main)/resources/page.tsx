@@ -232,6 +232,8 @@ export default function ResourcesPage() {
     totalPages,
     isLoading,
     isPopularLoading,
+    listError,
+    popularError,
   } = useDocuments();
 
   // tabParam으로 초기 탭 설정 (마운트 1회)
@@ -243,21 +245,33 @@ export default function ResourcesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleDocumentClick = useCallback((documentId: string) => {
-    router.push(`/resources/${documentId}`);
-  }, [router]);
+  const handleDocumentClick = useCallback(
+    (documentId: string) => {
+      router.push(`/resources/${documentId}`);
+    },
+    [router],
+  );
 
-  const handleSelectCategory = useCallback((id: string | null) => {
-    setSelectedCategoryId(id);
-  }, [setSelectedCategoryId]);
+  const handleSelectCategory = useCallback(
+    (id: string | null) => {
+      setSelectedCategoryId(id);
+    },
+    [setSelectedCategoryId],
+  );
 
   const rootCategoryNames = useMemo(
     () => categoryTree.map((n) => n.name),
-    [categoryTree]
+    [categoryTree],
   );
 
-  const totalPagesCalc = Math.max(totalPages, Math.ceil(documents.length / PAGE_SIZE));
-  const pagedDocuments = documents.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPagesCalc = Math.max(
+    totalPages,
+    Math.ceil(documents.length / PAGE_SIZE),
+  );
+  const pagedDocuments = documents.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
 
   return (
     <div className="flex h-dvh flex-col bg-background">
@@ -276,7 +290,11 @@ export default function ResourcesPage() {
       {/* 탭 바 */}
       <div className="flex shrink-0 border-b border-border bg-background px-4">
         {(["popular", "tree", "list"] as const).map((tab) => {
-          const labels = { popular: "인기 문서", tree: "카테고리 탐색", list: "문서 목록" };
+          const labels = {
+            popular: "인기 문서",
+            tree: "카테고리 탐색",
+            list: "전체 문서 목록",
+          };
           return (
             <button
               key={tab}
@@ -284,7 +302,7 @@ export default function ResourcesPage() {
                 "px-3 py-3 text-sm font-medium transition-colors",
                 activeTab === tab
                   ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
               onClick={() => setActiveTab(tab)}
             >
@@ -297,15 +315,17 @@ export default function ResourcesPage() {
       {/* 콘텐츠 영역 */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-4xl px-4 py-4">
-
           {/* ── 카테고리 탐색 탭 ── */}
           {activeTab === "tree" && (
             <div>
               <p className="mb-4 text-sm text-muted-foreground">
-                카테고리를 선택하면 해당 카테고리에 속한 문서를 확인할 수 있습니다.
+                카테고리를 선택하면 해당 카테고리에 속한 문서를 확인할 수
+                있습니다.
               </p>
               {categoryTree.length === 0 ? (
-                <p className="text-sm text-muted-foreground">카테고리를 불러오는 중...</p>
+                <p className="text-sm text-muted-foreground">
+                  카테고리를 불러오는 중...
+                </p>
               ) : (
                 <div className="flex flex-col gap-0.5">
                   {categoryTree.map((node) => (
@@ -347,7 +367,7 @@ export default function ResourcesPage() {
                       "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                       !selectedCategoryId
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-secondary"
+                        : "bg-muted text-muted-foreground hover:bg-secondary",
                     )}
                     onClick={() => setSelectedCategoryId(null)}
                   >
@@ -362,9 +382,11 @@ export default function ResourcesPage() {
                           "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                           selectedCategoryId === node?.categoryId
                             ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-secondary"
+                            : "bg-muted text-muted-foreground hover:bg-secondary",
                         )}
-                        onClick={() => setSelectedCategoryId(node?.categoryId ?? null)}
+                        onClick={() =>
+                          setSelectedCategoryId(node?.categoryId ?? null)
+                        }
                       >
                         {cat}
                       </button>
@@ -373,7 +395,9 @@ export default function ResourcesPage() {
                 </div>
                 <select
                   value={sort}
-                  onChange={(e) => setSort(e.target.value as "latest" | "popular")}
+                  onChange={(e) =>
+                    setSort(e.target.value as "latest" | "popular")
+                  }
                   className="shrink-0 rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
                   <option value="latest">최신순</option>
@@ -385,7 +409,11 @@ export default function ResourcesPage() {
                 총 {totalCount || documents.length}개 문서
               </p>
 
-              {isLoading ? (
+              {listError ? (
+                <div className="flex items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 py-16 text-sm text-destructive">
+                  {listError}
+                </div>
+              ) : isLoading ? (
                 <div className="flex items-center justify-center rounded-xl border border-border py-16 text-sm text-muted-foreground">
                   불러오는 중...
                 </div>
@@ -415,20 +443,22 @@ export default function ResourcesPage() {
                   >
                     이전
                   </button>
-                  {Array.from({ length: totalPagesCalc }, (_, i) => i + 1).map((p) => (
-                    <button
-                      key={p}
-                      className={cn(
-                        "size-7 rounded text-xs transition-colors",
-                        p === page
-                          ? "bg-primary text-primary-foreground font-medium"
-                          : "text-muted-foreground hover:bg-secondary"
-                      )}
-                      onClick={() => setPage(p)}
-                    >
-                      {p}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPagesCalc }, (_, i) => i + 1).map(
+                    (p) => (
+                      <button
+                        key={p}
+                        className={cn(
+                          "size-7 rounded text-xs transition-colors",
+                          p === page
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "text-muted-foreground hover:bg-secondary",
+                        )}
+                        onClick={() => setPage(p)}
+                      >
+                        {p}
+                      </button>
+                    ),
+                  )}
                   <button
                     className="rounded px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40"
                     onClick={() => setPage(Math.min(totalPagesCalc, page + 1))}
@@ -450,7 +480,11 @@ export default function ResourcesPage() {
                   인기 문서
                 </span>
               </div>
-              {isPopularLoading ? (
+              {popularError ? (
+                <div className="flex items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 py-16 text-sm text-destructive">
+                  {popularError}
+                </div>
+              ) : isPopularLoading ? (
                 <div className="flex items-center justify-center rounded-xl border border-border py-16 text-sm text-muted-foreground">
                   불러오는 중...
                 </div>
@@ -470,14 +504,15 @@ export default function ResourcesPage() {
                         updatedAt: doc.updatedAt,
                         viewCount: doc.viewCount,
                       }}
-                      onClick={() => handleDocumentClick(String(doc.documentId))}
+                      onClick={() =>
+                        handleDocumentClick(String(doc.documentId))
+                      }
                     />
                   ))}
                 </div>
               )}
             </div>
           )}
-
         </div>
       </div>
     </div>
