@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useCallback, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   ArrowLeft,
   Search,
@@ -48,9 +48,10 @@ function CategoryTreeNode({
   const isExpanded = expandedNodes.has(node.categoryId);
   const isSelected = selectedCategoryId === node.categoryId;
 
-  const inlineDocs = isExpanded && !hasChildren
-    ? (categoryDocumentsMap.get(node.categoryId) ?? null)
-    : null;
+  const inlineDocs =
+    isExpanded && !hasChildren
+      ? (categoryDocumentsMap.get(node.categoryId) ?? null)
+      : null;
 
   const handleClick = () => {
     onToggleNode(node.categoryId);
@@ -68,7 +69,7 @@ function CategoryTreeNode({
             ? "bg-primary/8 text-primary font-medium shadow-sm"
             : isSelected
               ? "bg-accent text-primary font-medium"
-              : "text-foreground hover:bg-secondary/50"
+              : "text-foreground hover:bg-secondary/50",
         )}
         aria-expanded={isExpanded}
       >
@@ -82,7 +83,7 @@ function CategoryTreeNode({
         <ChevronRight
           className={cn(
             "size-4 shrink-0 transition-transform duration-200",
-            isExpanded ? "rotate-90 text-primary" : "text-muted-foreground"
+            isExpanded ? "rotate-90 text-primary" : "text-muted-foreground",
           )}
         />
         {isExpanded ? (
@@ -91,7 +92,7 @@ function CategoryTreeNode({
           <Folder
             className={cn(
               "size-4 shrink-0",
-              isSelected ? "text-primary" : "text-muted-foreground"
+              isSelected ? "text-primary" : "text-muted-foreground",
             )}
           />
         )}
@@ -138,7 +139,9 @@ function CategoryTreeNode({
                 className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-secondary/50"
               >
                 <FileText className="size-3.5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate text-foreground">{doc.title}</span>
+                <span className="flex-1 truncate text-foreground">
+                  {doc.title}
+                </span>
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {doc.updatedAt}
                 </span>
@@ -156,7 +159,13 @@ function CategoryTreeNode({
 // ──────────────────────────────────────────────
 
 interface DocRowProps {
-  document: { documentId: string; title: string; category: string; updatedAt: string; viewCount?: number };
+  document: {
+    documentId: string;
+    title: string;
+    category: string;
+    updatedAt: string;
+    viewCount?: number;
+  };
   onClick: () => void;
 }
 
@@ -208,6 +217,7 @@ function DocRow({ document, onClick }: DocRowProps) {
 
 export default function ResourcesPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
 
@@ -236,14 +246,26 @@ export default function ResourcesPage() {
     popularError,
   } = useDocuments();
 
-  // tabParam으로 초기 탭 설정 (마운트 1회)
+  // URL의 tab 파라미터 ↔ activeTab 동기화
+  // 뒤로가기/북마크 등으로 URL이 먼저 바뀌는 경우를 처리 (이전 탭 복원)
   useEffect(() => {
-    if (tabParam === "list") setActiveTab("list");
-    else if (tabParam === "popular") setActiveTab("popular");
-    else if (tabParam === "tree") setActiveTab("tree");
-    // setActiveTab은 안정적인 콜백이므로 deps 생략 가능
+    if (tabParam === "list" || tabParam === "popular" || tabParam === "tree") {
+      if (tabParam !== activeTab) setActiveTab(tabParam);
+    }
+    // 의도: tabParam 변경 시에만 activeTab을 끌어올림. 반대 방향은 handleTabChange가 담당.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tabParam]);
+
+  // 탭 클릭 시 상태 + URL을 함께 갱신 (뒤로가기 시 복원 가능하도록)
+  const handleTabChange = useCallback(
+    (tab: "popular" | "tree" | "list") => {
+      setActiveTab(tab);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [setActiveTab, searchParams, router, pathname],
+  );
 
   const handleDocumentClick = useCallback(
     (documentId: string) => {
@@ -304,7 +326,7 @@ export default function ResourcesPage() {
                   ? "border-b-2 border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground",
               )}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => handleTabChange(tab)}
             >
               {labels[tab]}
             </button>
