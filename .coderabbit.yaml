@@ -1,0 +1,32 @@
+language: ko-KR
+reviews:
+  high_level_summary: true
+  poem: false
+  review_status: false
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    # CRITICAL/HIGH만 코멘트, 나머지는 무시
+    drafts: false
+  path_filters:
+    # 리뷰 제외 경로
+    - "!**/*.md"
+    - "!docs/**"
+    - "!.claude/rules/**"
+    - "!.claude/skills/**"
+    - "!.claude/settings/**"
+    - "!constants/mock-*.ts"
+    - "!package-lock.json"
+    - "!.gitignore"
+    - "!.env*"
+    - "!vitest.config.ts"
+    - "!public/**"
+  path_instructions:
+    - path: "components/ui/**"
+      instructions: "shadcn/ui 컴포넌트는 CLI로 관리되므로 리뷰하지 않는다."
+    - path: "lib/api/**"
+      instructions: "백엔드 DTO와 타입 불일치, 보안 이슈(토큰 노출, credentials 누락)만 지적한다."
+    - path: "types/**"
+      instructions: "백엔드 DTO와의 불일치만 지적한다. 네이밍 컨벤션 등 사소한 코멘트는 생략한다."
+chat:
+  auto_reply: false
