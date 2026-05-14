@@ -1,15 +1,33 @@
-import type { ReactNode } from "react";
-// (main) 그룹 레이아웃 — 사이드바가 포함된 공통 쉘
-// 사이드바 메뉴: 새 채팅, 자료, FAQ, 마이페이지, 설정, (관리자)
+"use client";
+
+import { Suspense, useState } from "react";
+import { Sidebar } from "@/components/sidebar/Sidebar";
+import { SidebarContext } from "@/components/sidebar/SidebarContext";
+import { ChatProvider } from "@/components/chat/ChatContext";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+
+// TODO: <TourProvider> 감싸기
 export default function MainLayout({
   children,
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
 }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    <div>
-      {/* TODO: Sidebar */}
-      <main>{children}</main>
-    </div>
+    <AuthProvider>
+      <SidebarContext.Provider
+        value={{ open: sidebarOpen, setOpen: setSidebarOpen }}
+      >
+        <ChatProvider>
+          <div className="flex h-dvh bg-white">
+            <Sidebar />
+            <Suspense>
+              <main className="flex min-w-0 flex-1 flex-col">{children}</main>
+            </Suspense>
+          </div>
+        </ChatProvider>
+      </SidebarContext.Provider>
+    </AuthProvider>
   );
 }

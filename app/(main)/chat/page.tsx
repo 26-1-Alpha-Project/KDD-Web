@@ -1,10 +1,63 @@
-// 메인 채팅 페이지 — 새 채팅 / Welcome Message
-// 유저플로우: 로그인 완료 → Welcome Message 표시 → 질문 입력
-// 기능: 채팅 입력창("무엇이든 물어보세요."), 학과/학부 선택 옵션, 채팅 히스토리 사이드바
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChatHeader } from "@/components/chat/ChatHeader";
+import { ChatWelcome } from "@/components/chat/ChatWelcome";
+import { ChatInput } from "@/components/chat/ChatInput";
+import { useChatContext } from "@/components/chat/ChatContext";
+import { getRecommendedQuestions } from "@/lib/api/services/chat.service";
+import type { RecommendedQuestion } from "@/types/api/chat";
+
 export default function ChatPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { createNewSession } = useChatContext();
+  const [recommendations, setRecommendations] = useState<RecommendedQuestion[]>([]);
+  const [isRecommendationsLoading, setIsRecommendationsLoading] = useState(true);
+
+  // FAQ "채팅에서 이어가기" 등에서 넘어온 초기 질문
+  const initialQuery = searchParams.get("q") ?? undefined;
+
+  useEffect(() => {
+    setIsRecommendationsLoading(true);
+    getRecommendedQuestions()
+      .then((res) => setRecommendations(res.questions))
+      .catch((err) => {
+        console.error("[ChatPage] getRecommendedQuestions 실패", err);
+        setRecommendations([]);
+      })
+      .finally(() => setIsRecommendationsLoading(false));
+  }, []);
+
+  const handleSend = async (message: string) => {
+    try {
+      const sessionId = await createNewSession();
+      router.push(`/chat/${sessionId}?q=${encodeURIComponent(message)}&autosend=1`);
+    } catch {
+      // 세션 생성 실패 시 임시 id로 이동
+      const tempId = `new-${Date.now()}`;
+      router.push(`/chat/${tempId}?q=${encodeURIComponent(message)}&autosend=1`);
+    }
+  };
+
   return (
-    <div>
-      <h1>채팅</h1>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <ChatHeader />
+      <div className="relative min-h-0 flex-1">
+        <div className="mx-auto flex h-full max-w-3xl flex-col overflow-y-auto px-4 pt-6 pb-24">
+          <ChatWelcome
+            onSuggestionClick={handleSend}
+            recommendations={recommendations}
+            isLoading={isRecommendationsLoading}
+          />
+        </div>
+        <ChatInput
+          onSend={handleSend}
+          initialValue={initialQuery}
+          className="absolute inset-x-0 bottom-6 mx-auto w-[calc(100%-2rem)] max-w-184"
+        />
+      </div>
     </div>
   );
 }

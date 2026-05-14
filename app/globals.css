@@ -1,33 +1,159 @@
 @import "tailwindcss";
 
-:root {
-  --kmu-blue: #004f9f;
-  --background-blue: #eff6ff;
-  --text-primary: #0a0a0a;
-  --text-secondary: #4a5565;
-  --text-muted: #717182;
-  --input-background: #f3f3f5;
-  --white: #ffffff;
-  --border-subtle: rgba(0, 0, 0, 0.1);
-
-  --background: var(--white);
-  --foreground: var(--text-primary);
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-kmu-blue: var(--kmu-blue);
-  --color-background-blue: var(--background-blue);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-input-background: var(--input-background);
-  --color-white: var(--white);
-  --color-border-subtle: var(--border-subtle);
-  --font-sans: var(--font-inter), var(--font-noto-sans-kr), sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* FAQ 토픽 색상 토큰 */
+  --color-topic-academic-bg: var(--topic-academic-bg);
+  --color-topic-academic-fg: var(--topic-academic-fg);
+  --color-topic-graduation-bg: var(--topic-graduation-bg);
+  --color-topic-graduation-fg: var(--topic-graduation-fg);
+  --color-topic-leave-bg: var(--topic-leave-bg);
+  --color-topic-leave-fg: var(--topic-leave-fg);
+  --color-topic-scholarship-bg: var(--topic-scholarship-bg);
+  --color-topic-scholarship-fg: var(--topic-scholarship-fg);
+  --color-topic-registration-bg: var(--topic-registration-bg);
+  --color-topic-registration-fg: var(--topic-registration-fg);
+  --color-topic-major-bg: var(--topic-major-bg);
+  --color-topic-major-fg: var(--topic-major-fg);
+  --color-topic-career-bg: var(--topic-career-bg);
+  --color-topic-career-fg: var(--topic-career-fg);
+  --color-topic-event-bg: var(--topic-event-bg);
+  --color-topic-event-fg: var(--topic-event-fg);
+  --color-topic-other-bg: var(--topic-other-bg);
+  --color-topic-other-fg: var(--topic-other-fg);
+
+  /* 토픽 border 토큰 */
+  --color-topic-academic-border: var(--topic-academic-border);
+  --color-topic-graduation-border: var(--topic-graduation-border);
+  --color-topic-leave-border: var(--topic-leave-border);
+  --color-topic-scholarship-border: var(--topic-scholarship-border);
+  --color-topic-registration-border: var(--topic-registration-border);
+  --color-topic-major-border: var(--topic-major-border);
+  --color-topic-career-border: var(--topic-career-border);
+  --color-topic-event-border: var(--topic-event-border);
+  --color-topic-other-border: var(--topic-other-border);
+
+  /* 투표/피드백 토큰 */
+  --color-vote-up-bg: var(--vote-up-bg);
+  --color-vote-up-fg: var(--vote-up-fg);
+  --color-vote-down-bg: var(--vote-down-bg);
+  --color-vote-down-fg: var(--vote-down-fg);
+
+  /* 문서 상태 토큰 */
+  --color-status-uploaded-bg: var(--status-uploaded-bg);
+  --color-status-uploaded-fg: var(--status-uploaded-fg);
+  --color-status-processing-bg: var(--status-processing-bg);
+  --color-status-processing-fg: var(--status-processing-fg);
+  --color-status-completed-bg: var(--status-completed-bg);
+  --color-status-completed-fg: var(--status-completed-fg);
+  --color-status-failed-bg: var(--status-failed-bg);
+  --color-status-failed-fg: var(--status-failed-fg);
+  --color-status-reprocessing-bg: var(--status-reprocessing-bg);
+  --color-status-reprocessing-fg: var(--status-reprocessing-fg);
+
+  /* 인기/강조 토큰 */
+  --color-popular-bg: var(--popular-bg);
+  --color-popular-fg: var(--popular-fg);
+  --color-popular-icon: var(--popular-icon);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+
+  --primary: #004f9f;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f5f5f5;
+  --muted-foreground: #999999;
+  --accent: #e8f0fe;
+  --accent-foreground: #004f9f;
+  --destructive: #ef4444;
+  --border: #e0e0e0;
+  --input: #e0e0e0;
+  --ring: #004f9f;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --radius: 0.5rem;
+
+  /* FAQ 토픽 색상 */
+  --topic-academic-bg: #dbeafe;
+  --topic-academic-fg: #1d4ed8;
+  --topic-graduation-bg: #dcfce7;
+  --topic-graduation-fg: #15803d;
+  --topic-leave-bg: #f3e8ff;
+  --topic-leave-fg: #7c3aed;
+  --topic-scholarship-bg: #fef3c7;
+  --topic-scholarship-fg: #b45309;
+  --topic-registration-bg: #cffafe;
+  --topic-registration-fg: #0e7490;
+  --topic-major-bg: #e0e7ff;
+  --topic-major-fg: #4338ca;
+  --topic-career-bg: #ffe4e6;
+  --topic-career-fg: #be123c;
+  --topic-event-bg: #ffedd5;
+  --topic-event-fg: #c2410c;
+  --topic-other-bg: #f3f4f6;
+  --topic-other-fg: #4b5563;
+
+  /* 토픽 border */
+  --topic-academic-border: #bfdbfe;
+  --topic-graduation-border: #86efac;
+  --topic-leave-border: #ddd6fe;
+  --topic-scholarship-border: #fde68a;
+  --topic-registration-border: #fed7aa;
+  --topic-major-border: #c7d2fe;
+  --topic-career-border: #fbcfe8;
+  --topic-event-border: #fed7aa;
+  --topic-other-border: #d1d5db;
+
+  /* 투표/피드백 */
+  --vote-up-bg: #dcfce7;
+  --vote-up-fg: #15803d;
+  --vote-down-bg: #fee2e2;
+  --vote-down-fg: #dc2626;
+
+  /* 문서 상태 */
+  --status-uploaded-bg: #f3f4f6;
+  --status-uploaded-fg: #4b5563;
+  --status-processing-bg: #eff6ff;
+  --status-processing-fg: #1d4ed8;
+  --status-completed-bg: #f0fdf4;
+  --status-completed-fg: #15803d;
+  --status-failed-bg: #fef2f2;
+  --status-failed-fg: #b91c1c;
+  --status-reprocessing-bg: #fffbeb;
+  --status-reprocessing-fg: #b45309;
+
+  /* 인기/강조 */
+  --popular-bg: #fffbeb;
+  --popular-fg: #92400e;
+  --popular-icon: #f59e0b;
 }
 
 body {
@@ -66,4 +192,66 @@ body {
     line-height: 20px;
     font-weight: 500;
   }
+}
+
+/* 기본 포커스/활성 검은 링 제거 — 키보드 포커스(:focus-visible)만 노출 */
+*:focus {
+  outline: none;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* 모바일 탭 하이라이트 제거 */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 커스텀 스크롤바 — shadcn 스타일 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: hsl(0 0% 82% / 0.6) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background-color: hsl(0 0% 82% / 0.6);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(0 0% 64% / 0.8);
+}
+
+/* 스크롤바 완전 숨김 유틸리티 — Tailwind scrollbar-none 보강 */
+.scrollbar-none,
+.scrollbar-none:hover {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-none:hover::-webkit-scrollbar {
+  display: none;
 }
