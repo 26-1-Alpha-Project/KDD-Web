@@ -1,3 +1,5 @@
+import type { PageResponse } from './common';
+
 export interface AdminDocument {
   id: number;
   title: string;
@@ -85,4 +87,71 @@ export interface DocumentResponse {
   originalFilename: string;
   fileSize: number;
   createdAt: string;
+}
+
+/** GET /admin/users 요청 파라미터 */
+export interface AdminUserListRequest {
+  page?: number;
+  size?: number;
+  userType?: 'student' | 'staff';
+  role?: 'user' | 'admin';
+  search?: string;
+}
+
+/** GET /admin/users 응답 내 사용자 항목 */
+export interface AdminUserItem {
+  userId: number;
+  name: string;
+  email: string;
+  userType: 'student' | 'staff';
+  role: 'user' | 'admin';
+  dailyChatLimit: number;
+  usedToday: number;
+}
+
+/** GET /admin/users 페이지 응답 */
+export type AdminUserListPageResponse = PageResponse<AdminUserItem>;
+
+/** PATCH /admin/users/{id}/chat-limit 요청 */
+export interface UpdateUserChatLimitRequest {
+  dailyChatLimit: number;
+}
+
+/** PATCH /admin/users/{id}/chat-limit 응답 */
+export interface UpdateUserChatLimitResponse {
+  userId: number;
+  dailyChatLimit: number;
+}
+
+/** PATCH /admin/users/chat-limit/bulk 요청 */
+export interface BulkUpdateChatLimitRequest {
+  userIds: number[];
+  dailyChatLimit: number;
+}
+
+/** PATCH /admin/users/chat-limit/bulk 응답 */
+export interface BulkUpdateChatLimitResponse {
+  updatedCount: number;
+  dailyChatLimit: number;
+}
+
+/** POST /admin/users/{id}/chat-usage/reset 응답 */
+export interface ResetUserUsageResponse {
+  userId: number;
+  usedToday: number;
+}
+
+/** GET /admin/settings/default-chat-limit 응답 */
+export interface DefaultChatLimitResponse {
+  defaultDailyChatLimit: number;
+}
+
+/** PATCH /admin/settings/default-chat-limit 요청 */
+export interface UpdateDefaultChatLimitRequest {
+  defaultDailyChatLimit: number;
+}
+
+/** PATCH /admin/settings/default-chat-limit 응답 */
+export interface UpdateDefaultChatLimitResponse {
+  defaultDailyChatLimit: number;
 }
