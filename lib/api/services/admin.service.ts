@@ -7,6 +7,16 @@ import type {
   FAQCandidateListRequest,
   FAQCandidateListResponse,
   DocumentResponse,
+  AdminUserListRequest,
+  AdminUserListPageResponse,
+  UpdateUserChatLimitRequest,
+  UpdateUserChatLimitResponse,
+  BulkUpdateChatLimitRequest,
+  BulkUpdateChatLimitResponse,
+  ResetUserUsageResponse,
+  DefaultChatLimitResponse,
+  UpdateDefaultChatLimitRequest,
+  UpdateDefaultChatLimitResponse,
 } from '@/types/api/admin';
 import type { FAQListRequest, FAQListResponse, FAQItem } from "@/types/api/faq";
 import {
@@ -15,6 +25,7 @@ import {
   MOCK_FAQ_CANDIDATES,
 } from "@/constants/mock-admin";
 import { MOCK_FAQ_ITEMS } from "@/constants/mock-faq";
+import { MOCK_ADMIN_USERS, MOCK_DEFAULT_CHAT_LIMIT } from '@/constants/mock-admin-users';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
@@ -263,4 +274,109 @@ export async function deleteAdminFAQ(faqId: string | number): Promise<void> {
     return;
   }
   await apiClient.delete<void>(`/admin/faqs/${faqId}`);
+}
+
+// ── 관리자 사용자 관리 (채팅 사용량 제한) ──────────────────────────
+
+export async function getAdminUsers(
+  params?: AdminUserListRequest,
+): Promise<AdminUserListPageResponse> {
+  if (USE_MOCK) {
+    await delay(400);
+    let filtered = [...MOCK_ADMIN_USERS];
+    if (params?.userType)
+      filtered = filtered.filter((u) => u.userType === params.userType);
+    if (params?.role)
+      filtered = filtered.filter((u) => u.role === params.role);
+    if (params?.search) {
+      const s = params.search.toLowerCase();
+      filtered = filtered.filter(
+        (u) =>
+          u.name.toLowerCase().includes(s) ||
+          u.email.toLowerCase().includes(s),
+      );
+    }
+    const page = params?.page ?? 0;
+    const size = params?.size ?? 20;
+    const start = page * size;
+    const paged = filtered.slice(start, start + size);
+    return {
+      data: paged,
+      totalCount: filtered.length,
+      page,
+      pageSize: size,
+      totalPages: Math.ceil(filtered.length / size),
+    };
+  }
+  return apiClient.get<AdminUserListPageResponse>("/admin/users", {
+    params: {
+      page: params?.page,
+      size: params?.size,
+      userType: params?.userType,
+      role: params?.role,
+      search: params?.search,
+    },
+  });
+}
+
+export async function updateUserChatLimit(
+  userId: number,
+  req: UpdateUserChatLimitRequest,
+): Promise<UpdateUserChatLimitResponse> {
+  if (USE_MOCK) {
+    await delay(300);
+    return { userId, dailyChatLimit: req.dailyChatLimit };
+  }
+  return apiClient.patch<UpdateUserChatLimitResponse>(
+    `/admin/users/${userId}/chat-limit`,
+    req,
+  );
+}
+
+export async function bulkUpdateChatLimit(
+  req: BulkUpdateChatLimitRequest,
+): Promise<BulkUpdateChatLimitResponse> {
+  if (USE_MOCK) {
+    await delay(500);
+    return { updatedCount: req.userIds.length, dailyChatLimit: req.dailyChatLimit };
+  }
+  return apiClient.patch<BulkUpdateChatLimitResponse>(
+    "/admin/users/chat-limit/bulk",
+    req,
+  );
+}
+
+export async function resetUserUsage(
+  userId: number,
+): Promise<ResetUserUsageResponse> {
+  if (USE_MOCK) {
+    await delay(300);
+    return { userId, usedToday: 0 };
+  }
+  return apiClient.post<ResetUserUsageResponse>(
+    `/admin/users/${userId}/chat-usage/reset`,
+  );
+}
+
+export async function getDefaultChatLimit(): Promise<DefaultChatLimitResponse> {
+  if (USE_MOCK) {
+    await delay(200);
+    return { defaultDailyChatLimit: MOCK_DEFAULT_CHAT_LIMIT };
+  }
+  return apiClient.get<DefaultChatLimitResponse>(
+    "/admin/settings/default-chat-limit",
+  );
+}
+
+export async function updateDefaultChatLimit(
+  req: UpdateDefaultChatLimitRequest,
+): Promise<UpdateDefaultChatLimitResponse> {
+  if (USE_MOCK) {
+    await delay(300);
+    return { defaultDailyChatLimit: req.defaultDailyChatLimit };
+  }
+  return apiClient.patch<UpdateDefaultChatLimitResponse>(
+    "/admin/settings/default-chat-limit",
+    req,
+  );
 }

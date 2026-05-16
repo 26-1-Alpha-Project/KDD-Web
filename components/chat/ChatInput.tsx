@@ -10,9 +10,11 @@ interface ChatInputProps {
   className?: string;
   /** 마운트 시 입력창에 채워넣을 초기 텍스트 (자동 전송 안 함) */
   initialValue?: string;
+  /** 기본 placeholder를 대체할 커스텀 텍스트 */
+  placeholder?: string;
 }
 
-export function ChatInput({ onSend, disabled, className, initialValue }: ChatInputProps) {
+export function ChatInput({ onSend, disabled, className, initialValue, placeholder }: ChatInputProps) {
   const [value, setValue] = useState(initialValue ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isSendingRef = useRef(false);
@@ -73,9 +75,13 @@ export function ChatInput({ onSend, disabled, className, initialValue }: ChatInp
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="메시지를 입력하세요..."
+        placeholder={placeholder ?? "메시지를 입력하세요..."}
+        disabled={disabled}
         rows={1}
-        className="max-h-40 flex-1 resize-none overflow-y-auto scrollbar-none bg-transparent text-base leading-6 text-foreground outline-none field-sizing-content placeholder:text-muted-foreground"
+        className={cn(
+          "max-h-40 flex-1 resize-none overflow-y-auto scrollbar-none bg-transparent text-base leading-6 text-foreground outline-none field-sizing-content placeholder:text-muted-foreground",
+          disabled && "cursor-not-allowed opacity-50"
+        )}
       />
       <button
         onClick={handleSend}

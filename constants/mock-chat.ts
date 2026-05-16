@@ -262,7 +262,7 @@ export const MOCK_SSE_SEQUENCE_HIGH: SSEEvent[] = [
     type: "text",
     content: "\n\n휴학 신청은 KLAS에서 온라인으로 하시면 됩니다.",
   } satisfies SSETextEvent,
-  { type: "done", messageId: 1001 } satisfies SSEDoneEvent,
+  { type: "done", messageId: 1001, remaining: 14 } satisfies SSEDoneEvent,
 ];
 
 export const MOCK_SSE_SEQUENCE_LOW: SSEEvent[] = [
@@ -284,7 +284,7 @@ export const MOCK_SSE_SEQUENCE_LOW: SSEEvent[] = [
     type: "text",
     content: "\n\n담당자 연락처는 학교 홈페이지에서 확인하실 수 있습니다.",
   } satisfies SSETextEvent,
-  { type: "done", messageId: 1002 } satisfies SSEDoneEvent,
+  { type: "done", messageId: 1002, remaining: 13 } satisfies SSEDoneEvent,
 ];
 
 export const MOCK_SSE_FALLBACK: SSEFallbackEvent = {
