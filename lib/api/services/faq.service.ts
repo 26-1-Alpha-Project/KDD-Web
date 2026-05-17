@@ -128,7 +128,7 @@ export async function getFAQDetail(
       faqId: String(faqId),
       question: "질문을 찾을 수 없습니다",
       answer: "",
-      topic: "etc",
+      topic: "other",
       createdAt: new Date().toISOString(),
     };
   }

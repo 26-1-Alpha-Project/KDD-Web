@@ -255,7 +255,7 @@ export async function updateAdminFAQ(
       faqId: String(faqId),
       question: data.question ?? "",
       answer: data.answer ?? "",
-      topic: data.topic ?? "etc",
+      topic: data.topic ?? "other",
       createdAt: new Date().toISOString(),
       helpful: 0,
       notHelpful: 0,
