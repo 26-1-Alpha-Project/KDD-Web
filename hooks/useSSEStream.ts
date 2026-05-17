@@ -151,6 +151,13 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
             setEvents((prev) => [...prev, event]);
             if (event.type === "done") {
               options?.onDone?.(event.remaining);
+              // done/error/fallback 같은 terminal 이벤트를 setEvents와 같은 동기 블록에서
+              // setIsStreaming(false)를 호출해야 React가 두 setState를 하나의 batch로 커밋한다.
+              // finally에서만 호출하면 await 경계로 인해 별도 batch가 되어 useLayoutEffect가
+              // 마지막 text 이벤트를 포함하지 않은 events로 메시지를 확정하는 race가 생긴다.
+              setIsStreaming(false);
+            } else if (event.type === "error" || event.type === "fallback") {
+              setIsStreaming(false);
             }
           } catch (e) {
             // silent fail 을 막기 위해 항상 경고 — 마지막 이벤트가 부분 JSON 으로 도착하는

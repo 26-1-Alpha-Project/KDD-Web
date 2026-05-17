@@ -109,6 +109,7 @@ function mapApiMessageToLocal(msg: ChatMessageResponse): ChatMessage {
     confidence: (msg.confidence as ChatMessage["confidence"]) ?? undefined,
     sources: dedupedSources,
     rawSources,
+    partial: msg.partial || undefined,
     createdAt: msg.createdAt,
   };
 }

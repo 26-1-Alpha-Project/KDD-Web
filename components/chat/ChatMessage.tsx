@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, ChevronUp, ChevronDown, FileText } from "lucide-react";
+import { Copy, ChevronUp, ChevronDown, FileText, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { ConfidenceBadge } from "./ConfidenceBadge";
@@ -85,6 +85,14 @@ export function ChatMessage({
         >
           {renderContent()}
         </div>
+
+        {/* 부분 답변(스트리밍 중 오류로 중단됨) 안내 */}
+        {!isUser && message.partial && (
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <AlertCircle className="size-3 shrink-0" />
+            <span>답변이 중단되었습니다</span>
+          </div>
+        )}
 
         {/* 레거시 메시지 (rawSources 없음) — 기존 하단 출처 카드 유지 */}
         {showLegacySourceCards && (
