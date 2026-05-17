@@ -156,7 +156,7 @@ export const MOCK_FAQ_CANDIDATES: FAQCandidate[] = [
     status: "rejected",
     createdAt: "2026-04-04T11:00:00Z",
     frequency: 12,
-    topic: "etc",
+    topic: "other",
     draftAnswer: "학생증 재발급은 학생처에 방문하시거나 온라인으로 신청하실 수 있습니다.",
   },
   {
