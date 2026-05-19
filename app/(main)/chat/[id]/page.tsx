@@ -276,6 +276,15 @@ export default function ChatDetailPage({ params }: Props) {
     if (initialQueryHandled.current) return;
     const q = searchParams.get("q");
     const autosend = searchParams.get("autosend");
+    const source = searchParams.get("source");
+
+    // FAQ에서 넘어온 경우: 서버에서 이미 메시지가 로드되므로 autosend 불필요
+    if (source === "faq") {
+      initialQueryHandled.current = true;
+      router.replace(`/chat/${id}`);
+      return;
+    }
+
     if (q && messages.length === 0) {
       initialQueryHandled.current = true;
       handleSend(q);
