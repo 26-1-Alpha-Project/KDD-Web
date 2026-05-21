@@ -159,7 +159,14 @@ export function FAQTab() {
   }
 
   const visibleCandidates = candidates.filter((c) => {
-    if (filterStatus !== "all" && c.status !== filterStatus) return false;
+    if (filterStatus !== "all") {
+      // "registered" 필터는 낙관적 업데이트 상태 "approved"도 포함
+      const matched =
+        filterStatus === "registered"
+          ? c.status === "registered" || c.status === "approved"
+          : c.status === filterStatus;
+      if (!matched) return false;
+    }
     if (filterTopic !== "all" && c.topic !== filterTopic) return false;
     return true;
   });
@@ -208,10 +215,22 @@ export function FAQTab() {
   }, [selectedIds, rejectCandidate]);
 
   const handleBulkApprove = useCallback(
-    (topic: string) => {
-      pendingSelected.forEach((id) => approveCandidate(id, topic));
-      showToast(`${pendingSelected.length}개 FAQ가 등록되었습니다.`);
-      setSelectedIds(new Set());
+    async (topic: string) => {
+      const results = await Promise.allSettled(
+        pendingSelected.map((id) => approveCandidate(id, topic)),
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (failed > 0) {
+        showToast(`${succeeded}개 등록 완료, ${failed}개 실패`);
+      } else {
+        showToast(`${succeeded}개 FAQ가 등록되었습니다.`);
+      }
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        pendingSelected.forEach((id) => next.delete(id));
+        return next;
+      });
       setShowRegisterModal(false);
     },
     [pendingSelected, approveCandidate],

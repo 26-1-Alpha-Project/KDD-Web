@@ -67,7 +67,7 @@ export function ChatInput({
     <div
       onClick={handleContainerClick}
       className={cn(
-        "flex cursor-text items-center gap-4 rounded-[28px] border border-border bg-white px-5 py-3 shadow-[0px_2px_12px_0px_rgba(0,0,0,0.08)]",
+        "flex cursor-text items-center gap-4 rounded-[28px] border border-border bg-background px-5 py-3 shadow-md",
         className,
       )}
     >
@@ -90,8 +90,8 @@ export function ChatInput({
         className={cn(
           "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
           canSend
-            ? "bg-primary text-white hover:bg-primary/85"
-            : "bg-primary/30 text-white",
+            ? "bg-primary text-primary-foreground hover:bg-primary/85"
+            : "bg-primary/30 text-primary-foreground",
         )}
       >
         <ArrowUp className="size-5" />
