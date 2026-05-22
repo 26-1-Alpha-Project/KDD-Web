@@ -12,6 +12,8 @@ interface ChatInputProps {
   initialValue?: string;
   /** 기본 placeholder를 대체할 커스텀 텍스트 */
   placeholder?: string;
+  /** disabled 상태에서 사용자가 입력/전송을 시도했을 때 호출 */
+  onDisabledAttempt?: () => void;
 }
 
 export function ChatInput({
@@ -20,6 +22,7 @@ export function ChatInput({
   className,
   initialValue,
   placeholder,
+  onDisabledAttempt,
 }: ChatInputProps) {
   const [value, setValue] = useState(initialValue ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -58,9 +61,21 @@ export function ChatInput({
   };
 
   const handleContainerClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (disabled) {
+      onDisabledAttempt?.();
+      return;
+    }
     if ((e.target as HTMLElement).tagName !== "BUTTON") {
       textareaRef.current?.focus();
     }
+  };
+
+  const handleSendClick = () => {
+    if (disabled) {
+      onDisabledAttempt?.();
+      return;
+    }
+    handleSend();
   };
 
   return (
@@ -85,8 +100,8 @@ export function ChatInput({
         )}
       />
       <button
-        onClick={handleSend}
-        disabled={!canSend}
+        onClick={handleSendClick}
+        disabled={!canSend && !disabled}
         className={cn(
           "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
           canSend

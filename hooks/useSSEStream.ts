@@ -12,6 +12,7 @@ import {
 interface UseSSEStreamOptions {
   onDone?: (remaining?: number) => void;
   onRateLimit?: () => void;
+  onError?: (message: string) => void;
 }
 
 interface UseSSEStreamReturn {
@@ -37,7 +38,10 @@ const previewTail = (s: string, n = 60) => {
   return JSON.stringify(tail);
 };
 
-export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): UseSSEStreamReturn {
+export function useSSEStream(
+  sessionId: string,
+  options?: UseSSEStreamOptions,
+): UseSSEStreamReturn {
   const [events, setEvents] = useState<SSEEvent[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,36 +53,39 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
     setError(null);
   }, []);
 
-  const sendMessageMock = useCallback((content: string) => {
-    if (!content.trim()) return;
+  const sendMessageMock = useCallback(
+    (content: string) => {
+      if (!content.trim()) return;
 
-    messageCountRef.current += 1;
-    const count = messageCountRef.current;
+      messageCountRef.current += 1;
+      const count = messageCountRef.current;
 
-    const sequence =
-      count % 10 === 0
-        ? [MOCK_SSE_FALLBACK]
-        : count % 3 === 0
-          ? MOCK_SSE_SEQUENCE_LOW
-          : MOCK_SSE_SEQUENCE_HIGH;
+      const sequence =
+        count % 10 === 0
+          ? [MOCK_SSE_FALLBACK]
+          : count % 3 === 0
+            ? MOCK_SSE_SEQUENCE_LOW
+            : MOCK_SSE_SEQUENCE_HIGH;
 
-    setIsStreaming(true);
-    setEvents([]);
-    setError(null);
+      setIsStreaming(true);
+      setEvents([]);
+      setError(null);
 
-    sequence.forEach((event, index) => {
-      const delayMs = 100 + index * (150 + Math.random() * 150);
-      setTimeout(() => {
-        setEvents((prev) => [...prev, event]);
-        if (event.type === "done") {
-          options?.onDone?.(event.remaining);
-        }
-        if (index === sequence.length - 1) {
-          setIsStreaming(false);
-        }
-      }, delayMs);
-    });
-  }, [options]);
+      sequence.forEach((event, index) => {
+        const delayMs = 100 + index * (150 + Math.random() * 150);
+        setTimeout(() => {
+          setEvents((prev) => [...prev, event]);
+          if (event.type === "done") {
+            options?.onDone?.(event.remaining);
+          }
+          if (index === sequence.length - 1) {
+            setIsStreaming(false);
+          }
+        }, delayMs);
+      });
+    },
+    [options],
+  );
 
   const sendMessageReal = useCallback(
     async (content: string) => {
@@ -109,7 +116,7 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
             method: "POST",
             headers,
             body: JSON.stringify({ content }),
-          }
+          },
         );
 
         if (!response.ok) {
@@ -144,7 +151,9 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
           for (const rawLine of frame.split("\n")) {
             const line = rawLine.replace(/\r$/, "");
             if (!line.startsWith("data:")) continue;
-            dataLines.push(line.startsWith("data: ") ? line.slice(6) : line.slice(5));
+            dataLines.push(
+              line.startsWith("data: ") ? line.slice(6) : line.slice(5),
+            );
           }
           if (dataLines.length === 0) {
             diagLog("frame has no data: lines, skip", JSON.stringify(frame));
@@ -158,7 +167,7 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
               `type=${event.type}`,
               event.type === "text"
                 ? `len=${event.content.length} preview=${JSON.stringify(event.content)}`
-                : `raw=${jsonStr.slice(0, 120)}`
+                : `raw=${jsonStr.slice(0, 120)}`,
             );
             setEvents((prev) => [...prev, event]);
             if (event.type === "done") {
@@ -178,7 +187,7 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
               "[SSE] JSON parse 실패 — frame 누락 가능. raw frame:",
               jsonStr,
               "error:",
-              e
+              e,
             );
           }
         };
@@ -197,7 +206,12 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
           }
 
           buffer += decoder.decode(value, { stream: true });
-          diagLog("chunk recv", `bytes=${value.byteLength}`, `buf_len=${buffer.length}`, `tail=${previewTail(buffer)}`);
+          diagLog(
+            "chunk recv",
+            `bytes=${value.byteLength}`,
+            `buf_len=${buffer.length}`,
+            `tail=${previewTail(buffer)}`,
+          );
 
           // SSE 이벤트 경계는 빈 줄(\n\n 또는 \r\n\r\n)
           let boundary = buffer.search(/\r?\n\r?\n/);
@@ -210,7 +224,11 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
           }
         }
 
-        diagLog("stream ended", `leftover_buf_len=${buffer.length}`, `leftover=${previewTail(buffer)}`);
+        diagLog(
+          "stream ended",
+          `leftover_buf_len=${buffer.length}`,
+          `leftover=${previewTail(buffer)}`,
+        );
 
         // 스트림 종료 후 남은 프레임 처리
         if (buffer.trim().length > 0) {
@@ -218,10 +236,14 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
         }
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
+          err instanceof Error
+            ? err.message
+            : "알 수 없는 오류가 발생했습니다.";
         setError(message);
         // 네트워크 오류나 기타 예외도 UI에 노출시켜 silent fail을 방지한다.
         // 429는 위에서 별도 처리했으므로 여기 도달하지 않는다.
+        const fallbackMessage =
+          "응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.";
         setEvents((prev) => {
           // 이미 error/fallback 이벤트가 있다면 중복 추가하지 않는다.
           if (prev.some((e) => e.type === "error" || e.type === "fallback")) {
@@ -231,15 +253,16 @@ export function useSSEStream(sessionId: string, options?: UseSSEStreamOptions): 
             ...prev,
             {
               type: "error",
-              message: "응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.",
+              message: fallbackMessage,
             },
           ];
         });
+        options?.onError?.(fallbackMessage);
       } finally {
         setIsStreaming(false);
       }
     },
-    [sessionId, options]
+    [sessionId, options],
   );
 
   const sendMessage = USE_MOCK ? sendMessageMock : sendMessageReal;

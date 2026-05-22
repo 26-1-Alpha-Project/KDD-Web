@@ -13,6 +13,7 @@ import { AnswerWithCitations } from "@/components/chat/AnswerWithCitations";
 import { useChatContext } from "@/components/chat/ChatContext";
 import { useSSEStream } from "@/hooks/useSSEStream";
 import { useChatUsage } from "@/hooks/useChatUsage";
+import { useToast } from "@/components/ui/toast";
 import { getSessionDetail } from "@/lib/api/services/chat.service";
 import { getDocumentDetail } from "@/lib/api/services/document.service";
 import { ApiError } from "@/lib/api/errors";
@@ -20,6 +21,11 @@ import type { ChatMessage, Source } from "@/types/chat";
 import type { SSEEvent, ChatMessageResponse } from "@/types/api/chat";
 
 type PageState = "loading" | "loaded" | "notFound" | "serverError";
+
+const RATE_LIMIT_MESSAGE =
+  "오늘의 채팅 횟수를 모두 사용했습니다. 내일 00:00(KST)에 초기화됩니다.";
+const NETWORK_ERROR_MESSAGE =
+  "응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.";
 
 // react-pdf는 DOMMatrix 같은 브라우저 전용 API를 모듈 평가 시점에 참조하므로
 // SSR을 비활성화한 동적 import로만 로드한다.
@@ -120,6 +126,7 @@ export default function ChatDetailPage({ params }: Props) {
   const router = useRouter();
   const { renameChat } = useChatContext();
   const { remaining, setRemaining, refresh } = useChatUsage();
+  const toast = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const [pageState, setPageState] = useState<PageState>("loading");
@@ -140,6 +147,10 @@ export default function ChatDetailPage({ params }: Props) {
     },
     onRateLimit: () => {
       setRemaining(0);
+      toast.error(RATE_LIMIT_MESSAGE);
+    },
+    onError: () => {
+      toast.error(NETWORK_ERROR_MESSAGE);
     },
   });
 
@@ -325,7 +336,9 @@ export default function ChatDetailPage({ params }: Props) {
       {/* Task 3.4: notFound UI 렌더링 */}
       {pageState === "notFound" && (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4">
-          <p className="text-lg font-medium text-foreground">존재하지 않는 채팅방입니다</p>
+          <p className="text-lg font-medium text-foreground">
+            존재하지 않는 채팅방입니다
+          </p>
           <Link href="/chat" className="text-sm text-primary hover:underline">
             채팅 목록으로 이동
           </Link>
@@ -335,7 +348,9 @@ export default function ChatDetailPage({ params }: Props) {
       {/* Task 3.5: serverError UI 렌더링 */}
       {pageState === "serverError" && (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4">
-          <p className="text-lg font-medium text-foreground">오류가 발생했습니다</p>
+          <p className="text-lg font-medium text-foreground">
+            오류가 발생했습니다
+          </p>
           <p className="text-sm text-muted-foreground">다시 시도해주세요.</p>
           <button
             onClick={handleRetry}
@@ -359,7 +374,10 @@ export default function ChatDetailPage({ params }: Props) {
                 <ChatMessageList
                   messages={messages}
                   isStreaming={
-                    isStreaming && !streamingText && !fallbackEvent && !errorEvent
+                    isStreaming &&
+                    !streamingText &&
+                    !fallbackEvent &&
+                    !errorEvent
                   }
                   onSelectQuestion={handleSend}
                   onOpenPDF={handleOpenPDF}
@@ -395,9 +413,28 @@ export default function ChatDetailPage({ params }: Props) {
 
                 {!isStreaming && errorEvent && (
                   <div className="mt-6">
-                    <FallbackMessage type="error" message={errorEvent.message} />
+                    <FallbackMessage
+                      type="error"
+                      message={errorEvent.message}
+                    />
                   </div>
                 )}
+
+                {/* 마지막 메시지가 user인데 응답이 없고 오늘 한도가 0이면 안내 표시.
+                    (재로드 시 SSE 이벤트가 휘발되므로 같은 케이스를 복구한다) */}
+                {!isStreaming &&
+                  !fallbackEvent &&
+                  !errorEvent &&
+                  messages.length > 0 &&
+                  messages[messages.length - 1].role === "user" &&
+                  remaining === 0 && (
+                    <div className="mt-6">
+                      <FallbackMessage
+                        type="error"
+                        message={RATE_LIMIT_MESSAGE}
+                      />
+                    </div>
+                  )}
               </div>
             )}
           </div>
@@ -405,7 +442,14 @@ export default function ChatDetailPage({ params }: Props) {
             <ChatInput
               onSend={handleSend}
               disabled={isStreaming || remaining === 0}
-              placeholder={remaining === 0 ? "오늘의 채팅 횟수를 모두 사용했습니다. 내일 00:00(KST)에 초기화됩니다." : undefined}
+              placeholder={remaining === 0 ? RATE_LIMIT_MESSAGE : undefined}
+              onDisabledAttempt={() => {
+                if (remaining === 0) {
+                  toast.error(RATE_LIMIT_MESSAGE);
+                } else if (isStreaming) {
+                  toast.warning("답변 생성이 끝난 후 다시 시도해주세요.");
+                }
+              }}
               className="absolute inset-x-0 bottom-6 mx-auto w-[calc(100%-2rem)] max-w-184"
             />
           )}
