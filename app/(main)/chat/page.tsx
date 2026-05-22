@@ -7,14 +7,19 @@ import { ChatWelcome } from "@/components/chat/ChatWelcome";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { useChatContext } from "@/components/chat/ChatContext";
 import { useChatUsage } from "@/hooks/useChatUsage";
+import { useToast } from "@/components/ui/toast";
 import { getRecommendedQuestions } from "@/lib/api/services/chat.service";
 import type { RecommendedQuestion } from "@/types/api/chat";
+
+const RATE_LIMIT_MESSAGE =
+  "오늘의 채팅 횟수를 모두 사용했습니다. 내일 00:00(KST)에 초기화됩니다.";
 
 export default function ChatPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { createNewSession } = useChatContext();
   const { remaining } = useChatUsage();
+  const toast = useToast();
   const [recommendations, setRecommendations] = useState<RecommendedQuestion[]>(
     [],
   );
@@ -37,7 +42,10 @@ export default function ChatPage() {
 
   const handleSend = async (message: string) => {
     // 일일 사용 한도 소진 시 세션 생성/이동을 막아 빈 세션이 쌓이는 것을 방지한다.
-    if (remaining === 0) return;
+    if (remaining === 0) {
+      toast.error(RATE_LIMIT_MESSAGE);
+      return;
+    }
     try {
       const sessionId = await createNewSession();
       router.push(
@@ -66,11 +74,8 @@ export default function ChatPage() {
         <ChatInput
           onSend={handleSend}
           disabled={remaining === 0}
-          placeholder={
-            remaining === 0
-              ? "오늘의 채팅 횟수를 모두 사용했습니다. 내일 00:00(KST)에 초기화됩니다."
-              : undefined
-          }
+          placeholder={remaining === 0 ? RATE_LIMIT_MESSAGE : undefined}
+          onDisabledAttempt={() => toast.error(RATE_LIMIT_MESSAGE)}
           initialValue={initialQuery}
           className="absolute inset-x-0 bottom-6 mx-auto w-[calc(100%-2rem)] max-w-184"
         />
