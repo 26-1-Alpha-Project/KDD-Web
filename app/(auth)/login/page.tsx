@@ -152,13 +152,17 @@ function LoginPageContent() {
     setLoginError(null);
     setIsLoggingIn(true);
 
+    // hd 파라미터를 넣으면 Google이 해당 도메인 계정만 노출/허용해서
+    // (1) 타 학교 계정 로그인이 막히고
+    // (2) 모바일에서 자동 로그인된 다른 도메인 세션이 있을 때 계정 선택 화면 없이
+    //     바로 진행되어 백엔드 403으로 떨어진다.
+    // prompt=select_account 만으로 항상 계정 선택 화면을 띄운다.
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: GOOGLE_REDIRECT_URI,
       response_type: "code",
       scope: "email profile",
       prompt: "select_account",
-      hd: "kookmin.ac.kr",
     });
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
@@ -352,7 +356,7 @@ function LoginPageContent() {
                 </p>
               )}
               <p className="text-xs text-muted-foreground text-center">
-                국민대학교 계정(@kookmin.ac.kr)으로 로그인하세요
+                Google 계정으로 로그인하세요
               </p>
             </div>
           </div>
