@@ -95,6 +95,10 @@ export function useSSEStream(
       setEvents([]);
       setError(null);
 
+      // terminal 이벤트(done/error/fallback)를 수신하면 true로 설정.
+      // catch/finally에서 참조해야 하므로 try 바깥에 선언한다.
+      let terminated = false;
+
       try {
         // SSE는 Next.js rewrites 프록시의 버퍼링 문제를 피하기 위해 백엔드에 직접 요청
         const baseUrl = (
@@ -177,8 +181,10 @@ export function useSSEStream(
               // finally에서만 호출하면 await 경계로 인해 별도 batch가 되어 useLayoutEffect가
               // 마지막 text 이벤트를 포함하지 않은 events로 메시지를 확정하는 race가 생긴다.
               setIsStreaming(false);
+              terminated = true;
             } else if (event.type === "error" || event.type === "fallback") {
               setIsStreaming(false);
+              terminated = true;
             }
           } catch (e) {
             // silent fail 을 막기 위해 항상 경고 — 마지막 이벤트가 부분 JSON 으로 도착하는
@@ -193,6 +199,13 @@ export function useSSEStream(
         };
 
         while (true) {
+          // terminal 이벤트를 이미 수신했으면 reader를 cancel하고 루프를 탈출한다.
+          // 서버가 연결을 닫는 과정에서 reader.read()가 throw하는 것을 방지.
+          if (terminated) {
+            reader.cancel().catch(() => {});
+            break;
+          }
+
           const { done, value } = await reader.read();
           if (done) {
             // stream:true 로 누적된 디코더 내부 잔여 바이트를 flush 한다.
@@ -220,6 +233,7 @@ export function useSSEStream(
             const match = buffer.slice(boundary).match(/^\r?\n\r?\n/);
             buffer = buffer.slice(boundary + (match ? match[0].length : 2));
             processFrame(frame);
+            if (terminated) break;
             boundary = buffer.search(/\r?\n\r?\n/);
           }
         }
@@ -230,11 +244,16 @@ export function useSSEStream(
           `leftover=${previewTail(buffer)}`,
         );
 
-        // 스트림 종료 후 남은 프레임 처리
-        if (buffer.trim().length > 0) {
+        // 스트림 종료 후 남은 프레임 처리 (terminal 이벤트 미수신 시에만)
+        if (!terminated && buffer.trim().length > 0) {
           processFrame(buffer);
         }
       } catch (err) {
+        // terminal 이벤트(done/error/fallback)를 이미 정상 수신한 뒤 서버가 연결을
+        // 닫으면서 reader.cancel()이나 후속 처리에서 에러가 발생할 수 있다.
+        // 이 경우 사용자에게 거짓 에러를 보여주면 안 되므로 무시한다.
+        if (terminated) return;
+
         const message =
           err instanceof Error
             ? err.message
@@ -259,7 +278,10 @@ export function useSSEStream(
         });
         options?.onError?.(fallbackMessage);
       } finally {
-        setIsStreaming(false);
+        // terminated가 true면 processFrame 내에서 이미 setIsStreaming(false)를 호출했다.
+        if (!terminated) {
+          setIsStreaming(false);
+        }
       }
     },
     [sessionId, options],
