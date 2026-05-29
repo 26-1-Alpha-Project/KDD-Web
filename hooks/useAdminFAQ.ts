@@ -13,8 +13,8 @@ import type { FAQCandidate } from "@/types/api/admin";
 
 type ActiveTab = "registered" | "candidates";
 
-export function useAdminFAQ() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("registered");
+export function useAdminFAQ(initialTab: ActiveTab = "registered") {
+  const [activeTab, setActiveTab] = useState<ActiveTab>(initialTab);
   const [faqs, setFaqs] = useState<FAQItem[]>([]);
   const [candidates, setCandidates] = useState<FAQCandidate[]>([]);
   const [isLoading, setIsLoading] = useState(false);

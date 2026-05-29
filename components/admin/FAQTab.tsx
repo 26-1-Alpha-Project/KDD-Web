@@ -145,7 +145,8 @@ function RegisterModal({ count, onRegister, onClose }: RegisterModalProps) {
 // ─── FAQTab 메인 ─────────────────────────────────────────────────────────────
 
 export function FAQTab() {
-  const { candidates, approveCandidate, rejectCandidate } = useAdminFAQ();
+  const { candidates, approveCandidate, rejectCandidate } =
+    useAdminFAQ("candidates");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
